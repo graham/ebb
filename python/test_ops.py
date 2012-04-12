@@ -88,9 +88,9 @@ class TestOperations(unittest.TestCase):
         back, inverse = reverse.apply(result)
         self.assertEqual(back.obj_repr(), [1,2,3])
 
-    def test_hash_key_apply(self):
+    def test_dict_key_apply(self):
         init = trees.Node.from_obj({'one':'hello'})
-        op = ops.HashKeyApplyOperation('one', ops.StringInsertOperation(5, ' world'))
+        op = ops.DictKeyApplyOperation('one', ops.StringInsertOperation(5, ' world'))
         result, reverse = op.apply(init)
         self.assertEqual(result.obj_repr(), {'one':"hello world"})
 
@@ -103,7 +103,7 @@ class TestOperations(unittest.TestCase):
         first, revert_first = op1.apply(init)
         self.assertEqual(first.obj_repr(), [51,2,{'one':'hello'}])
 
-        op2 = ops.ListApplyIndexOperation(2, ops.HashKeyApplyOperation('one', ops.StringInsertOperation(0, 'sup, ')))
+        op2 = ops.ListApplyIndexOperation(2, ops.DictKeyApplyOperation('one', ops.StringInsertOperation(0, 'sup, ')))
         second, revert_second = op2.apply(init)
         self.assertEqual(second.obj_repr(), [51,2,{'one':'sup, hello'}])
 

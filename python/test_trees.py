@@ -34,8 +34,8 @@ class TestTrees(unittest.TestCase):
             x.children.append(y)
         self.assertEqual(x.obj_repr(), l)
 
-    def test_hash(self):
-        x = trees.Node(type='hash')
+    def test_dict(self):
+        x = trees.Node(type='dict')
         l = dict(one=1, two=2, three=3, four=4)
         for i in l:
             v = l[i]
@@ -46,16 +46,16 @@ class TestTrees(unittest.TestCase):
         self.assertEqual(x.obj_repr(), l)
 
     def test_nested(self):
-        x = trees.Node(type='hash')
+        x = trees.Node(type='dict')
         l = dict(three=[ {'one':1}, {'two':True} ])
 
-        first = trees.Node(type='hash')
+        first = trees.Node(type='dict')
         first_obj = trees.Node(type='number')
         first_obj.attr['key'] = 'one'
         first_obj.set_value(1)
         first.children.append(first_obj)
 
-        second = trees.Node(type='hash')
+        second = trees.Node(type='dict')
         second_obj = trees.Node(type='boolean')
         second_obj.attr['key'] = 'two'
         second_obj.set_value(True)
@@ -71,16 +71,16 @@ class TestTrees(unittest.TestCase):
         self.assertEqual(l, x.obj_repr())
 
     def test_getter(self):
-        x = trees.Node(type='hash')
+        x = trees.Node(type='dict')
         l = dict(three=[ {'one':1}, {'two':True} ])
 
-        first = trees.Node(type='hash')
+        first = trees.Node(type='dict')
         first_obj = trees.Node(type='number')
         first_obj.attr['key'] = 'one'
         first_obj.set_value(1)
         first.children.append(first_obj)
 
-        second = trees.Node(type='hash')
+        second = trees.Node(type='dict')
         second_obj = trees.Node(type='boolean')
         second_obj.attr['key'] = 'two'
         second_obj.set_value(True)
@@ -97,16 +97,16 @@ class TestTrees(unittest.TestCase):
         self.assertEqual(leaf.obj_repr(), 1)
         
     def test_setter(self):
-        x = trees.Node(type='hash')
+        x = trees.Node(type='dict')
         l = dict(three=[ {'one':1}, {'two':True} ])
 
-        first = trees.Node(type='hash')
+        first = trees.Node(type='dict')
         first_obj = trees.Node(type='number')
         first_obj.attr['key'] = 'one'
         first_obj.set_value(1)
         first.children.append(first_obj)
 
-        second = trees.Node(type='hash')
+        second = trees.Node(type='dict')
         second_obj = trees.Node(type='boolean')
         second_obj.attr['key'] = 'two'
         second_obj.set_value(True)

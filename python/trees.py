@@ -7,11 +7,11 @@ TYPES = {
     'string':1,
     'boolean':2,
     'list':3,
-    'hash':4,
+    'dict':4,
     'null':5
 }
 
-def python_to_json_type(k):
+def obj_to_json_type(k):
     if type(k) in (int, long, float, bool):
         return 'number'
     elif type(k) in (str, unicode):
@@ -19,7 +19,7 @@ def python_to_json_type(k):
     elif type(k) in (list, ):
         return 'list'
     elif type(k) in (dict, ):
-        return 'hash'
+        return 'dict'
     elif k == None:
         return 'null'
     elif type(k) in (Node,):
@@ -60,7 +60,7 @@ class Node(object):
 
     @classmethod
     def from_obj(cls, obj):
-        t = python_to_json_type(obj)
+        t = obj_to_json_type(obj)
         if t == 'number':
             n = Node(type='number')
             n.set_value(obj)
@@ -78,8 +78,8 @@ class Node(object):
             for i in obj:
                 n.children.append(Node.from_obj(i))
             return n
-        elif t == 'hash':
-            n = Node(type='hash')
+        elif t == 'dict':
+            n = Node(type='dict')
             for k in obj:
                 v = obj[k]
                 nn = Node.from_obj(v)
@@ -109,7 +109,7 @@ class Node(object):
             return json.loads(self.value)
         elif self.type == TYPES['list']:
             return [i.obj_repr() for i in self.children]
-        elif self.type == TYPES['hash']:
+        elif self.type == TYPES['dict']:
             return dict([(i.attr['key'], i.obj_repr()) for i in self.children])
         elif self.type == TYPES['null']:
             return None
@@ -136,7 +136,7 @@ class Node(object):
             return obj.get_path(di.join(sp[1:]))
 
     def _get(self, key):
-        if self.type == TYPES['hash']:
+        if self.type == TYPES['dict']:
             for i in self.children:
                 if key == i.attr['key']:
                     return i
@@ -161,14 +161,14 @@ class Node(object):
             return obj.set_path(di.join(sp[1:]), val)
 
     def _set(self, key, value):
-        if self.type == TYPES['hash']:
+        if self.type == TYPES['dict']:
             for i in self.children:
                 if key == i.attr['key']:
                     i.set_value(value)
                     return
 
             #looks like we didn't find the key
-            n = Node(type=python_to_json_type(value))
+            n = Node(type=obj_to_json_type(value))
             n.attr['key'] = key
             n.set_value(value)
             self.children.append(n)
@@ -193,7 +193,7 @@ class Node(object):
             return obj.remove_path(di.join(sp[1:]))
 
     def _remove(self, key):
-        if self.type == TYPES['hash']:
+        if self.type == TYPES['dict']:
             to_remove = None
             for i in self.children:
                 if key == i.attr['key']:

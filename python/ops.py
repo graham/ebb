@@ -105,7 +105,7 @@ class ListApplyIndexOperation(Operation):
 
 ### Dictionary Operations.
 ### This is tricky.
-class HashKeyApplyOperation(Operation):
+class DictKeyApplyOperation(Operation):
     def __init__(self, key, operation):
         self.key = key
         self.operation = operation
@@ -114,6 +114,6 @@ class HashKeyApplyOperation(Operation):
         child = node.get_path(self.key)
         new, reverse = self.operation.apply(child)
         node.set_path(self.key, new)
-        reverse_op = HashKeyApplyOperation(self.key, reverse)
+        reverse_op = DictKeyApplyOperation(self.key, reverse)
         return node, reverse_op
         
