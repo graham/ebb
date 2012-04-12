@@ -125,17 +125,30 @@ class TestTrees(unittest.TestCase):
         leaf = x.get_path('three.0.one')
         self.assertEqual(leaf.obj_repr(), num)
 
-        #x.set_path('three.0.two', 'blarg')
-        #leaf = x.get_path('three.0.two')
-        #self.assertEqual(leaf.obj_repr(), 'blarg')
+        x.set_path('three.1.two', 'blarg')
+        leaf = x.get_path('three.1.two')
+        self.assertEqual(leaf.obj_repr(), 'blarg')
 
-        #x.set_path('three.1', [1,2,3])
-        #print x.get_path('three').obj_repr()
+        x.set_path('three.1', [1,2,3])
+        leaf = x.get_path('three')
+        self.assertEqual(leaf.obj_repr(), [{'one':num}, [1,2,3]])
 
     def test_from_obj(self):
         l = [1,2,3]
         n = trees.Node.from_obj(l)
         self.assertEqual(n.obj_repr(), l)
+
+    def test_remove(self):
+        l = [1,2,3, {'key':'value'}]
+        n = trees.Node.from_obj(l)
+        self.assertEqual(n.obj_repr(), l)
+
+        n.remove_path('0')
+        self.assertEqual(n.obj_repr(), [2,3, {'key':'value'}])
+
+        n.remove_path('2.key')
+        self.assertEqual(n.get_path('2').obj_repr(), {})
+        
 
 if __name__ == '__main__':
     unittest.main()

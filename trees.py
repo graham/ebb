@@ -12,7 +12,7 @@ TYPES = {
 }
 
 def python_to_json_type(k):
-    if type(k) in (int, float, bool):
+    if type(k) in (int, long, float, bool):
         return 'number'
     elif type(k) in (str, unicode):
         return 'string'
@@ -22,6 +22,8 @@ def python_to_json_type(k):
         return 'hash'
     elif k == None:
         return 'null'
+    elif type(k) in (Node,):
+        return 'node'
     else:
         raise Exception('unknown type %r' % str(type(k)))
 
@@ -32,13 +34,29 @@ def type_for_enum(k):
 
 class Node(object):
     def __init__(self, **kwargs):
+        self.name = None
+        self.type = None
+        self.attr = {}
+
         if 'name' in kwargs:
             self.name = kwargs['name']
         if 'type' in kwargs:
             self.type = TYPES[kwargs['type']]
-        self.attr = {}
+        elif 'type_id' in kwargs:
+            self.type = kwargs['type_id']
+        if 'attr' in kwargs:
+            self.attr = kwargs['attr']
+
         self.value = None
         self.children = []
+
+    def proto(self, value=None, children=None):
+        p = Node(name=self.name, type_id=self.type, attr=self.attr)
+        if value != None:
+            p.set_value(value)
+        if children != None:
+            p.children = children
+        return p
 
     @classmethod
     def from_obj(cls, obj):
@@ -71,6 +89,8 @@ class Node(object):
         elif t == 'null':
             n = Node(type='null')
             return n
+        elif t == 'node':
+            return obj
 
     def __repr__(self):
         if DEBUG:
@@ -97,10 +117,12 @@ class Node(object):
             raise Exception("%i is not defined in the TYPES table" % self.type)
 
     def set_value(self, obj):
-        if type(obj) in (int, float, bool, str, unicode):
+        if type(obj) in (int, long, float, bool, str, unicode):
             self.value = json.dumps(obj)
+        elif type(obj) in (Node,):
+            self.value = obj.value
         else:
-            self.children = Node.json(obj)
+            self.children = Node.from_obj(obj)
 
     ## Nice things to have for testing.
 
@@ -114,21 +136,20 @@ class Node(object):
             return obj.get_path(di.join(sp[1:]))
 
     def _get(self, key):
-        if key.isdigit():
+        if self.type == TYPES['hash']:
+            for i in self.children:
+                if key == i.attr['key']:
+                    return i
+            raise Exception('key not found %s' % key)
+        elif key.isdigit():
             if self.type == TYPES['string']:
                 return self.value[int(key)]
             elif self.type == TYPES['list']:
                 return self.children[int(key)]
             else:
                 raise Exception('Invalid path: cannot index type %s' % self.type)
-        elif self.type == TYPES['hash']:
-            for i in self.children:
-                if key == i.attr['key']:
-                    return i
-            raise Exception('key not found %s' % key)
         else:
             raise Exception('invalid path')
-                
 
     def set_path(self, key, val, di='.'):
         sp = key.split(di)
@@ -140,14 +161,7 @@ class Node(object):
             return obj.set_path(di.join(sp[1:]), val)
 
     def _set(self, key, value):
-        if key.isdigit():
-            if self.type == TYPES['string']:
-                self.value[int(key)] = value
-            elif self.type == TYPES['list']:
-                self.children[int(key)] = value
-            else:
-                raise Exception('Invalid path: cannot index type %s' % self.type)
-        elif self.type == TYPES['hash']:
+        if self.type == TYPES['hash']:
             for i in self.children:
                 if key == i.attr['key']:
                     i.set_value(value)
@@ -159,6 +173,43 @@ class Node(object):
             n.set_value(value)
             self.children.append(n)
             return n
+        elif key.isdigit():
+            if self.type == TYPES['string']:
+                self.value[int(key)] = value
+            elif self.type == TYPES['list']:
+                self.children[int(key)] = Node.from_obj(value)
+            else:
+                raise Exception('Invalid path: cannot index type %s' % self.type)
         else:
             raise Exception('invalid path')
-        
+
+    def remove_path(self, key, di='.'):
+        sp = key.split(di)
+        if len(sp) == 1:
+            return self._remove(sp[0])
+        else:
+            cur = sp[0]
+            obj = self._get(cur)
+            return obj.remove_path(di.join(sp[1:]))
+
+    def _remove(self, key):
+        if self.type == TYPES['hash']:
+            to_remove = None
+            for i in self.children:
+                if key == i.attr['key']:
+                    to_remove = i
+            if to_remove:
+                self.children.remove(i)
+        elif key.isdigit():
+            if self.type == TYPES['string']:
+                raise Exception('not supported')
+            elif self.type == TYPES['list']:
+                ikey = int(key)
+                if ikey == 0:
+                    self.children = self.children[ikey+1:]
+                else:
+                    self.children = self.children[:ikey] + self.children[ikey+1:]
+            else:
+                raise Exception('Invalid path: cannot index type %s' % self.type)
+        else:
+            raise Exception('invalid path')
