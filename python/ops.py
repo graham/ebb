@@ -117,3 +117,11 @@ class DictKeyApplyOperation(Operation):
         reverse_op = DictKeyApplyOperation(self.key, reverse)
         return node, reverse_op
         
+### Things that still need to be done.
+
+class MoveBookmarkOperation(Operation): 
+    pass
+class CopyBookmarkOperation(Operation):
+    pass
+class PruneBookmarkOperation(Operation):
+    pass
