@@ -16,6 +16,8 @@ def obj_to_json_type(k):
         return 'number'
     elif type(k) in (str, unicode):
         return 'string'
+    elif type(k) in (bool,):
+        return 'bool'
     elif type(k) in (list, ):
         return 'list'
     elif type(k) in (dict, ):
