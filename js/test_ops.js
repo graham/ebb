@@ -1,5 +1,6 @@
 var util = require("util");
 var trees = require("./trees");
+var ops = require("./ops");
 
 var passes = 0;
 var fails = 0;
@@ -36,7 +37,18 @@ var dict_equality = function(left, right) {
     return JSON.stringify(left) == JSON.stringify(right);
 };
 
+(function() {
+    var number = trees.Node.from_obj(123);
+    var op = new ops.NumberIncrementOperation(-23);
+    var rr = op.apply(number);
+    
+    util.puts(JSON.stringify(op));
 
+    assertEqual('number-test-1', rr[0].obj_repr(), 100);
+
+    var bi = rr[1].apply(rr[0]);
+    assertEqual('number-test-2', bi[0].obj_repr(), number.obj_repr());
+})();
 
 (function() {
     util.puts("");

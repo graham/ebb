@@ -98,14 +98,14 @@ var ops = (function() {
             this.value = value;
         };
 
-        ListSetIndexOperations.prototype.apply = function(node) {
+        ListSetIndexOperation.prototype.apply = function(node) {
             var old = node.children[this.index];
             node.children[this.index] = self.value;
             var reverse = new ListSetIndexOperation(this.index, old);
             return [node, reverse];
         };
 
-        var ListApplyIndexOperation = var function(index, operation) {
+        var ListApplyIndexOperation = function(index, operation) {
             this.index = index;
             this.operation = operation;
         };
@@ -133,12 +133,22 @@ var ops = (function() {
         };
         // end dict
 
-
         //class MoveBookmarkOperation(Operation): 
         //class CopyBookmarkOperation(Operation):
         //class PruneBookmarkOperation(Operation):
 
-        var exports = {};
+        var exports = {
+            'NumberIncrementOperation':NumberIncrementOperation,
+            'StringInsertOperation':StringInsertOperation,
+            'StringDeleteOperation':StringDeleteOperation,
+            'StringSetOperation':StringSetOperation,
+            'BooleanSetOperation':BooleanSetOperation,
+            'ListInsertOperation':ListInsertOperation,
+            'ListDeleteOperation':ListDeleteOperation,
+            'ListSetIndexOperation':ListSetIndexOperation,
+            'ListApplyIndexOperation':ListApplyIndexOperation,
+            'DictKeyApplyOperation':DictKeyApplyOperation
+        };
         // Lets see if we are running in the Node.js context or in a browser.
         if (typeof module !== 'undefined') {
             module.exports = exports;

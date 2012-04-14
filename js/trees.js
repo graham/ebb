@@ -27,7 +27,7 @@ var trees = (function() {
             } else if (k.constructor == Node) {
                 return "node";
             } else {
-                throw new Exception("Unsupported data type: " + t);
+                throw "Unsupported data type: " + t;
             }
         };
 
@@ -176,17 +176,17 @@ var trees = (function() {
                         return node;
                     }
                 }
-                throw new Exception("Key not found: " + key);
+                throw "Key not found: " + key;
             } else if (Number(key) != NaN) {
                 if (this.type == TYPES["string"]) {
                     return this.value[Number(key)];
                 } else if (this.type == TYPES["list"]) {
                     return this.children[Number(key)];
                 } else { 
-                    throw new Exception("invalid path: " + key);
+                    throw "invalid path: " + key;
                 }
             } else {
-                throw new Exception("invalid path: " + key);                
+                throw "invalid path: " + key;
             }
         };
 
@@ -222,10 +222,10 @@ var trees = (function() {
                 } else if (this.type == TYPES['list']) {
                     this.children[index] = Node.from_obj(value);
                 } else {
-                    throw new Exception("invalid path: " + key); 
+                    throw "invalid path: " + key; 
                 }
             } else {
-                throw new Exception("invalid path: " + key); 
+                throw "invalid path: " + key; 
             }
         };
 
@@ -256,10 +256,10 @@ var trees = (function() {
                 } else if (this.type == TYPES['list']) {
                     this.children = this.children.slice(0, index).concat(this.children.slice(index+1, this.children.length));
                 } else {
-                    throw new Exception("invalid path: " + key); 
+                    throw "invalid path: " + key;
                 }
             } else {
-                throw new Exception("invalid path: " + key); 
+                throw "invalid path: " + key;
             }
         };
 
