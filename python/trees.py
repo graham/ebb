@@ -133,8 +133,7 @@ class Node(object):
         if len(sp) == 1:
             return self._get(sp[0])
         else:
-            cur = sp[0]
-            obj = self._get(cur)
+            obj = self._get(sp[0])
             return obj.get_path(di.join(sp[1:]))
 
     def _get(self, key):
@@ -158,8 +157,7 @@ class Node(object):
         if len(sp) == 1:
             return self._set(sp[0], val)
         else:
-            cur = sp[0]
-            obj = self._get(cur)
+            obj = self._get(sp[0])
             return obj.set_path(di.join(sp[1:]), val)
 
     def _set(self, key, value):
@@ -190,18 +188,16 @@ class Node(object):
         if len(sp) == 1:
             return self._remove(sp[0])
         else:
-            cur = sp[0]
-            obj = self._get(cur)
+            obj = self._get(sp[0])
             return obj.remove_path(di.join(sp[1:]))
 
     def _remove(self, key):
         if self.type == TYPES['dict']:
-            to_remove = None
+            new_children = []
             for i in self.children:
-                if key == i.attr['key']:
-                    to_remove = i
-            if to_remove:
-                self.children.remove(i)
+                if key != i.attr['key']:
+                    new_children.append(i);
+            self.children = new_children;
         elif key.isdigit():
             if self.type == TYPES['string']:
                 raise Exception('not supported')

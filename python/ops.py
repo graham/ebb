@@ -66,6 +66,7 @@ class ListInsertOperation(Operation):
     def __init__(self, index, value):
         self.index = index
         self.value = value
+
     def apply(self, node):
         new = node.proto(children=node.children[:self.index] + self.value + node.children[self.index:])
         reverse = ListDeleteOperation(self.index, len(self.value))

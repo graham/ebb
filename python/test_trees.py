@@ -149,6 +149,11 @@ class TestTrees(unittest.TestCase):
         n.remove_path('2.key')
         self.assertEqual(n.get_path('2').obj_repr(), {})
         
-
+        l_two = [1,2,3, {'key':'value', 'last':'chance', 'why':'on', 'earth':'would', 'you':'do', 'things':'thisway'}];
+        l_two_expected = [1,2,3, {'key':'value', 'last':'chance', 'why':'on', 'you':'do', 'things':'thisway'}];
+        n2 = trees.Node.from_obj(l_two)
+        n2.remove_path('3.earth')
+        self.assertEqual(n2.obj_repr(), l_two_expected);
+        
 if __name__ == '__main__':
     unittest.main()
