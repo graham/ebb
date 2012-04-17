@@ -13,6 +13,11 @@ var ops = (function() {
             var reverse = new NumberIncrementOperation(this.amount * (-1));
             return [new_node, reverse];
         };
+        
+        NumberIncrementOperation.prototype.pack = function() {
+            return ["NumberIncrementOperation", this.amount];
+        };
+
         // end Number Operations.
 
         // String Operations
@@ -27,7 +32,11 @@ var ops = (function() {
             var reverse = new StringDeleteOperation(this.index, this.text.length);
             return [new_node, reverse];
         };
-        
+
+        StringInsertOperation.prototype.pack = function() {
+            return ["StringInsertOperation", this.index, this.text];
+        };
+
         var StringDeleteOperation = function(index, length) {
             this.index = index;
             this.length = length;
@@ -40,6 +49,10 @@ var ops = (function() {
             return [new_node, reverse];
         };
 
+        StringDeleteOperation.prototype.pack = function() {
+            return ["StringDeleteOperation", this.index, this.length];
+        };
+
         var StringSetOperation = function(value) {
             this.value = value;
         };
@@ -48,6 +61,10 @@ var ops = (function() {
             var new_node = node.proto({'value':this.value});
             var reverse = new StringSetOperation(node.obj_repr());
             return [new_node, reverse];
+        };
+
+        StringSetOperation.prototype.pack = function() {
+            return ["StringSetOperation", this.value];
         };
         // end String Operations
 
@@ -60,6 +77,10 @@ var ops = (function() {
             var new_node = node.proto({'value':this.value});
             var reverse = new BooleanSetOperation(!this.value);
             return [new_node, reverse];
+        };
+
+        BooleanSetOperation.prototype.pack = function() {
+            return ["BooleanSetOperation", this.value];
         };
         // end Boolean Operations
 
@@ -80,6 +101,10 @@ var ops = (function() {
             return [new_node, reverse];
         };
 
+        ListInsertOperation.prototype.pack = function() {
+            return ["ListInsertOperation", this.index, this.value];
+        };
+
         var ListDeleteOperation = function(index, length) {
             this.index = index;
             this.length = length;
@@ -95,6 +120,10 @@ var ops = (function() {
             return [new_node, reverse];
         };
 
+        ListDeleteOperation.prototype.pack = function() {
+            return ["ListDeleteOperation", this.index, this.length];
+        };
+
         var ListSetIndexOperation = function(index, value) {
             this.index = index;
             this.value = value;
@@ -102,9 +131,20 @@ var ops = (function() {
 
         ListSetIndexOperation.prototype.apply = function(node) {
             var old = node.children[this.index];
-            node.children[this.index] = this.value;
+            var new_node = node.proto({'value':node.value, 'children':[]});
+            for(var index in node.children) {
+                if (index == this.index) {
+                    new_node.children.push(this.value);
+                } else {
+                    new_node.children.push(node.children[index]);
+                }
+            }
             var reverse = new ListSetIndexOperation(this.index, old);
-            return [node, reverse];
+            return [new_node, reverse];
+        };
+
+        ListSetIndexOperation.prototype.pack = function() {
+            return ["ListSetIndexOperation", this.index, this.value];
         };
 
         var ListApplyIndexOperation = function(index, operation) {
@@ -115,8 +155,19 @@ var ops = (function() {
         ListApplyIndexOperation.prototype.apply = function(node) {
             var nr = this.operation.apply(node.children[this.index]);
             var reverse_op = new ListApplyIndexOperation(this.index, nr[1]);
-            node.children[this.index] = nr[0];
-            return [node, reverse_op];
+            var new_node = node.proto({'value':node.value, 'children':[]});
+            for(var index in node.children) {
+                if (index == this.index) {
+                    new_node.children.push(nr[0]);
+                } else {
+                    new_node.children.push(node.children[index]);
+                }
+            }
+            return [new_node, reverse_op];
+        };
+
+        ListApplyIndexOperation.prototype.pack = function() {
+            return ["ListApplyIndexOperation", this.index, this.operation.pack()];
         };
         // end List Operations
         
@@ -129,9 +180,17 @@ var ops = (function() {
         DictKeyApplyOperation.prototype.apply = function(node) {
             var child = node.get_path(this.key);
             var nr = this.operation.apply(child);
-            node.set_path(this.key, nr[0]);
+            var new_node = node.proto({'value':node.value, 'children':[]});
+            for(var index in node.children) {
+                new_node.children.push(node.children[index]);
+            }
+            new_node.set_path(this.key, nr[0]);
             reverse_op = new DictKeyApplyOperation(this.key, nr[1]);
-            return [node, reverse_op];
+            return [new_node, reverse_op];
+        };
+
+        DictKeyApplyOperation.prototype.pack = function() {
+            return ["DictKeyApplyOperation", this.key, this.operation.pack()];
         };
         // end dict
 
@@ -151,6 +210,17 @@ var ops = (function() {
             'ListApplyIndexOperation':ListApplyIndexOperation,
             'DictKeyApplyOperation':DictKeyApplyOperation
         };
+
+        var unpack = function(d) {
+            // there is some trickery here, but only to make things easier.
+            var klass = d[0];
+            var obj = new exports[klass].prototype.constructor();
+            exports[klass].prototype.constructor.apply(obj, d.slice(1));
+            return obj;
+        };
+
+        exports['unpack'] = unpack;
+
         // Lets see if we are running in the Node.js context or in a browser.
         if (typeof module !== 'undefined') {
             module.exports = exports;

@@ -61,7 +61,7 @@ var trees = (function() {
             if (d['attr'] != undefined) {
                 this.attr = d['attr'];
             }
-            this.value = null;
+            this.value = undefined;
             this.children = [];
         };
 

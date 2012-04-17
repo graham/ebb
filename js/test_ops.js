@@ -166,8 +166,7 @@ var dict_equality = function(left, right) {
 
     var op2 = new ops.ListApplyIndexOperation(2, new ops.DictKeyApplyOperation('one', new ops.StringInsertOperation(0, 'sup, ')));
     var ss = op2.apply(init);
-    assertEqual('test-depth-2', dict_equality(ss[0].obj_repr(), [51,2,{'one':'sup, hello'}]), true);
-
+    assertEqual('test-depth-2', dict_equality(ss[0].obj_repr(), [1,2,{'one':'sup, hello'}]), true);
     // test is not complete.
 })();
 
