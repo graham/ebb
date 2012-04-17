@@ -23,8 +23,8 @@ var ops = (function() {
 
         StringInsertOperation.prototype.apply = function(node) {
             var node_value = node.obj_repr();
-            var new_node = node.proto({'value':node_value.slice(0, this.index) + this.text + node_value.slice(this.index, node_value.length - this.index)});
-            var reverse = new StringDeleteOperation(this.index, len(self.text));
+            var new_node = node.proto({'value':node_value.slice(0, this.index) + this.text + node_value.slice(this.index, node_value.length)});
+            var reverse = new StringDeleteOperation(this.index, this.text.length);
             return [new_node, reverse];
         };
         
@@ -35,9 +35,8 @@ var ops = (function() {
 
         StringDeleteOperation.prototype.apply = function(node) {
             var node_value = node.obj_repr();
-            var target_len = node_value.length - (this.index + this.length);
-            var new_node = node.proto({'value':node_value.slice(0, this.index) + node_value.slice(this.index + this.length, target_len)});
-            var reverse = new StringInsertOperation(this.index, node_value.slice(this.index, target_len));
+            var new_node = node.proto({'value':node_value.slice(0, this.index) + node_value.slice(this.index + this.length, node_value.length)});
+            var reverse = new StringInsertOperation(this.index, node_value.slice(this.index, this.length));
             return [new_node, reverse];
         };
 
@@ -58,7 +57,7 @@ var ops = (function() {
         };
 
         BooleanSetOperation.prototype.apply = function(node) {
-            var new_node = node.proto({'value':self.value});
+            var new_node = node.proto({'value':this.value});
             var reverse = new BooleanSetOperation(!this.value);
             return [new_node, reverse];
         };
@@ -72,9 +71,11 @@ var ops = (function() {
 
         ListInsertOperation.prototype.apply = function(node) {
             var new_node = node.proto({
-                    'children':node.children.slice(0, this.index)
+                    'children':
+                    node.children.slice(0, this.index)
                     .concat(this.value)
-                    .concat(node.children.slice(this.index, (node.children.length - this.index)))});
+                    .concat(node.children.slice(this.index, node.children.length))
+                });
             var reverse = new ListDeleteOperation(this.index, this.value.length);
             return [new_node, reverse];
         };
@@ -86,9 +87,10 @@ var ops = (function() {
 
         ListDeleteOperation.prototype.apply = function(node) {
             var new_node = node.proto({
-                    'children':node.children.slice(0, this.index)
-                    .concat(this.value)
-                    .concat(node.children.slice(this.index, (node.children.length - this.index)))});
+                    'children':
+                    node.children.slice(0, this.index)
+                    .concat(node.children.slice(this.index+1, node.children.length))
+                });
             var reverse = new ListInsertOperation(this.index, node.children.slice(this.index, this.length));
             return [new_node, reverse];
         };
@@ -100,7 +102,7 @@ var ops = (function() {
 
         ListSetIndexOperation.prototype.apply = function(node) {
             var old = node.children[this.index];
-            node.children[this.index] = self.value;
+            node.children[this.index] = this.value;
             var reverse = new ListSetIndexOperation(this.index, old);
             return [node, reverse];
         };
@@ -128,7 +130,7 @@ var ops = (function() {
             var child = node.get_path(this.key);
             var nr = this.operation.apply(child);
             node.set_path(this.key, nr[0]);
-            reverse_op = new DictKeyApplyOperation(this.key, reverse);
+            reverse_op = new DictKeyApplyOperation(this.key, nr[1]);
             return [node, reverse_op];
         };
         // end dict

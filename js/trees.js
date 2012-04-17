@@ -56,7 +56,7 @@ var trees = (function() {
                 this.type = TYPES[d['type']];
             }
             if (d['type_id'] != undefined) {
-                this.type = d['type'];
+                this.type = d['type_id'];
             }
             if (d['attr'] != undefined) {
                 this.attr = d['attr'];
@@ -66,14 +66,14 @@ var trees = (function() {
         };
 
         Node.prototype.proto = function(d) {
-            var value = d['value'] || null;
-            var children = d['children'] || null;
+            var value = d['value'];
+            var children = d['children'];
             
-            var p = new Node({"name":this.name, type_id:this.type, attr:this.attr});
-            if (value !== null) {
+            var p = new Node({"name":this.name, "type_id":this.type, "attr":this.attr});
+            if (value !== undefined) {
                 p.set_value(value);
             }
-            if (children !== null) {
+            if (children !== undefined) {
                 p.children = children;
             }
             return p;
@@ -147,7 +147,7 @@ var trees = (function() {
             var t = typeof obj;
             if (t == "number" || t == "string" || t == "boolean") {
                 this.value = JSON.stringify(obj);
-            } else if (t.constructor == Node) {
+            } else if (obj.constructor == Node) {
                 this.value = obj.value;
             } else {
                 this.children = Node.from_obj(obj);

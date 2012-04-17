@@ -5,6 +5,19 @@ import trees
 class Operation(object):
     pass
 
+class CompoundOperation(object):
+    def __init__(self, operations):
+        self.operations = operations
+
+    def apply(self, node):
+        cur = node
+        revs = []
+        for i in self.operations:
+            result, reverse = i.apply(node)
+            cur = result
+            revs.append(reverse)
+        return cur, CompoundOperation(revs)
+
 ### Number Operations.
 
 class NumberIncrementOperation(Operation):
@@ -22,7 +35,7 @@ class StringInsertOperation(Operation):
     def __init__(self, index, text):
         self.index = index
         self.text = text
-
+        
     def apply(self, node):
         node_value = node.obj_repr()
         new = node.proto(node_value[:self.index] + self.text + node_value[self.index:])
@@ -89,7 +102,13 @@ class ListSetIndexOperation(Operation):
 
     def apply(self, node):
         old = node.children[self.index]
-        node.children[self.index] = self.value
+        new_children = []
+        for index, item in enumerate(node.children):
+            if index == self.index:
+                new_children.append(self.value)
+            else:
+                new_children.append(item)
+        node.children = new_children
         reverse = ListSetIndexOperation(self.index, old)
         return node, reverse
 
@@ -101,7 +120,13 @@ class ListApplyIndexOperation(Operation):
     def apply(self, node):
         new, reverse = self.operation.apply(node.children[self.index])
         reverse_op = ListApplyIndexOperation(self.index, reverse)
-        node.children[self.index] = new
+        new_children = []
+        for index, item in enumerate(node.children):
+            if index == self.index:
+                new_children.append(new)
+            else:
+                new_children.append(item)
+        node.children = new_children
         return node, reverse_op
 
 ### Dictionary Operations.

@@ -25,6 +25,10 @@ class TestOperations(unittest.TestCase):
         back, inverse = reverse.apply(result)
         self.assertEqual(back.obj_repr(), init.obj_repr())
 
+        op2 = ops.StringInsertOperation(len(result.obj_repr()), ", now more");
+        result2, reverse2 = op2.apply(result)
+        self.assertEqual(result2.obj_repr(), "well, hello world, now more")
+
     def test_string_delete(self):
         init = trees.Node.from_obj("hello world")
         op = ops.StringDeleteOperation(0, 2)
@@ -105,14 +109,25 @@ class TestOperations(unittest.TestCase):
 
         op2 = ops.ListApplyIndexOperation(2, ops.DictKeyApplyOperation('one', ops.StringInsertOperation(0, 'sup, ')))
         second, revert_second = op2.apply(init)
-        self.assertEqual(second.obj_repr(), [51,2,{'one':'sup, hello'}])
+        self.assertEqual(second.obj_repr(), [1,2,{'one':'sup, hello'}])
 
         step_back, revert_step_back = revert_second.apply(second)
-        self.assertEqual(first.obj_repr(), [51,2,{'one':'hello'}])
+        self.assertEqual(first.obj_repr(), [1,2,{'one':'hello'}])
         
         step_back_again, revert_step_back_again = revert_first.apply(step_back)
         self.assertEqual(step_back_again.obj_repr(), init.obj_repr())
+
+    def test_comp_operations(self):
+        init = trees.Node.from_obj([1,2,3])
+        op1 = ops.ListApplyIndexOperation(0, ops.NumberIncrementOperation(50))
+        op2 = ops.ListApplyIndexOperation(1, ops.NumberIncrementOperation(10))
+
+        op = ops.CompoundOperation( [op1, op2] )
+        result, reverse = op.apply(init)
+        self.assertEqual(result.obj_repr(), [51, 12, 3])
         
+        back, inverse = reverse.apply(result)
+        self.assertEqual(back.obj_repr(), init.obj_repr())
 
 if __name__ == '__main__':
     unittest.main()

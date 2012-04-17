@@ -8,10 +8,9 @@ var assertEqual = function(test_name, val1, val2) {
     if (test_name === undefined ||
         val1 === undefined ||
         val2 === undefined) {
-        throw Exception(" YOU ARE FUCKING STUPID ");
+        throw " YOU ARE FUCKING STUPID, name: " + JSON.stringify([test_name, val1, val2]);
     }
     if (val1 == val2) {
-        util.puts("PASS: " + test_name);
         passes += 1;
     } else {
         util.puts("FAIL: " + test_name + " -> " + val1 + " != " + val2);
