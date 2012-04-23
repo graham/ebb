@@ -11,6 +11,9 @@ TYPES = {
     'null':5
 }
 
+#I've thought quite a bit about having more data types, things like
+#sets, sorted_sets, packed_sets, 
+
 def obj_to_json_type(k):
     if type(k) in (int, long, float, bool):
         return 'number'
@@ -104,10 +107,16 @@ class Node(object):
 
     def obj_repr(self):
         if self.type == TYPES['number']:
+            if self.value == None:
+                self.value = json.dumps(0)
             return json.loads(self.value)
         elif self.type == TYPES['string']:
+            if self.value == None:
+                self.value = json.dumps('')
             return json.loads(self.value)
         elif self.type == TYPES['boolean']:
+            if self.value == None:
+                self.value = json.dumps(False)
             return json.loads(self.value)
         elif self.type == TYPES['list']:
             return [i.obj_repr() for i in self.children]
@@ -177,7 +186,10 @@ class Node(object):
             if self.type == TYPES['string']:
                 self.value[int(key)] = value
             elif self.type == TYPES['list']:
-                self.children[int(key)] = Node.from_obj(value)
+                if int(key) > len(self.children):
+                    self.children.insert(int(key), Node.from_obj(value))
+                else:
+                    self.children[int(key)] = Node.from_obj(value)
             else:
                 raise Exception('Invalid path: cannot index type %s' % self.type)
         else:

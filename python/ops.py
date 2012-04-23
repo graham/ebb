@@ -23,6 +23,7 @@ class CompoundOperation(Operation):
 ### Number Operations.
 
 class NumberIncrementOperation(Operation):
+    for_type = 'number'
     def __init__(self, amount):
         self.amount = amount
         
@@ -37,6 +38,7 @@ class NumberIncrementOperation(Operation):
 ### String Operations.
 
 class StringInsertOperation(Operation):
+    for_type = 'string'
     def __init__(self, index, text):
         self.index = index
         self.text = text
@@ -51,6 +53,7 @@ class StringInsertOperation(Operation):
         return new, reverse
 
 class StringDeleteOperation(Operation):
+    for_type = 'string'
     def __init__(self, index, length):
         self.index = index
         self.length = length
@@ -65,6 +68,7 @@ class StringDeleteOperation(Operation):
         return new, reverse
 
 class StringSetOperation(Operation):
+    for_type = 'string'
     def __init__(self, value):
         self.value = value
 
@@ -79,6 +83,7 @@ class StringSetOperation(Operation):
 ### Boolean operations.
 
 class BooleanSetOperation(Operation):
+    for_type = 'boolean'
     def __init__(self, value):
         self.value = value
 
@@ -93,6 +98,7 @@ class BooleanSetOperation(Operation):
 ### List operations.
 
 class ListInsertOperation(Operation):
+    for_type = 'list'
     def __init__(self, index, value):
         self.index = index
         self.value = value
@@ -106,6 +112,7 @@ class ListInsertOperation(Operation):
         return new, reverse
         
 class ListDeleteOperation(Operation):
+    for_type = 'list'
     def __init__(self, index, length):
         self.index = index
         self.length = length
@@ -119,6 +126,7 @@ class ListDeleteOperation(Operation):
         return new, reverse
 
 class ListSetIndexOperation(Operation):
+    for_type = 'list'
     def __init__(self, index, value):
         self.index = index
         self.value = value
@@ -141,6 +149,7 @@ class ListSetIndexOperation(Operation):
         return new_node, reverse
 
 class ListApplyIndexOperation(Operation):
+    for_type = 'list'
     def __init__(self, index, operation):
         self.index = index
         self.operation = operation
@@ -166,6 +175,7 @@ class ListApplyIndexOperation(Operation):
 ### Dictionary Operations.
 ### This is tricky.
 class DictKeyApplyOperation(Operation):
+    for_type = 'dict'
     def __init__(self, key, operation):
         self.key = key
         self.operation = operation
@@ -184,9 +194,9 @@ class DictKeyApplyOperation(Operation):
 
         reverse_op = DictKeyApplyOperation(self.key, reverse)
         return new_node, reverse_op
-        
-### Things that still need to be done.
 
+
+### Things that still need to be done.
 class MoveBookmarkOperation(Operation): 
     pass
 class CopyBookmarkOperation(Operation):
