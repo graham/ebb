@@ -37,6 +37,13 @@ class TestOperations(unittest.TestCase):
     
         back, inverse = reverse.apply(result)
         self.assertEqual(back.obj_repr(), init.obj_repr())
+
+        op2 = ops.StringDeleteOperation(6,5)
+        result, reverse = op2.apply(init)
+        self.assertEqual(result.obj_repr(), "hello ")
+        
+        back, inverse = reverse.apply(result)
+        self.assertEqual(back.obj_repr(), init.obj_repr())
     
     def test_string_set(self):
         init = trees.Node.from_obj("hello world")

@@ -1,16 +1,25 @@
 import trees
+import uuid
 
 ### Base Operation.
 
 class Operation(object):
-    pass
+    def __init__(self):
+        self._id = str(uuid.uuid4())
+
+    def __repr__(self):
+        return "<Op: %s>" % self.pack()
+
+    def proto(self):
+        return unpack(self.pack())
 
 class CompoundOperation(Operation):
     def __init__(self, operations):
+        Operation.__init__(self)
         self.operations = operations
 
     def pack(self):
-        return ['CompoundOperation', [i.pack() for i in self.operations]]
+        return ['CompoundOperation', self._id, [i.pack() for i in self.operations]]
 
     def apply(self, node):
         cur = node
@@ -25,10 +34,11 @@ class CompoundOperation(Operation):
 class NumberIncrementOperation(Operation):
     for_type = 'number'
     def __init__(self, amount):
+        Operation.__init__(self)
         self.amount = amount
         
     def pack(self):
-        return ['NumberIncrementOperation', self.amount]
+        return ['NumberIncrementOperation', self._id, self.amount]
 
     def apply(self, node):
         new = node.proto(node.obj_repr() + self.amount)
@@ -40,11 +50,12 @@ class NumberIncrementOperation(Operation):
 class StringInsertOperation(Operation):
     for_type = 'string'
     def __init__(self, index, text):
+        Operation.__init__(self)
         self.index = index
         self.text = text
 
     def pack(self):
-        return ['StringInsertOperation', self.index, self.text]
+        return ['StringInsertOperation', self._id, self.index, self.text]
         
     def apply(self, node):
         node_value = node.obj_repr()
@@ -55,11 +66,12 @@ class StringInsertOperation(Operation):
 class StringDeleteOperation(Operation):
     for_type = 'string'
     def __init__(self, index, length):
+        Operation.__init__(self)
         self.index = index
         self.length = length
 
     def pack(self):
-        return ['StringDeleteOperation', self.index, self.length]
+        return ['StringDeleteOperation', self._id, self.index, self.length]
 
     def apply(self, node):
         node_value = node.obj_repr()
@@ -70,10 +82,11 @@ class StringDeleteOperation(Operation):
 class StringSetOperation(Operation):
     for_type = 'string'
     def __init__(self, value):
+        Operation.__init__(self)
         self.value = value
 
     def pack(self):
-        return ['StringSetOperation', self.value]
+        return ['StringSetOperation', self._id, self.value]
 
     def apply(self, node):
         new = node.proto(self.value)
@@ -85,10 +98,11 @@ class StringSetOperation(Operation):
 class BooleanSetOperation(Operation):
     for_type = 'boolean'
     def __init__(self, value):
+        Operation.__init__(self)
         self.value = value
 
     def pack(self):
-        return ["BooleanSetOperation", self.value]
+        return ["BooleanSetOperation", self._id, self.value]
 
     def apply(self, node):
         new = node.proto(self.value)
@@ -100,11 +114,12 @@ class BooleanSetOperation(Operation):
 class ListInsertOperation(Operation):
     for_type = 'list'
     def __init__(self, index, value):
+        Operation.__init__(self)
         self.index = index
         self.value = value
 
     def pack(self):
-        return ["ListInsertOperation", self.index, self.value]
+        return ["ListInsertOperation", self._id, self.index, self.value]
 
     def apply(self, node):
         new = node.proto(children=node.children[:self.index] + self.value + node.children[self.index:])
@@ -114,11 +129,12 @@ class ListInsertOperation(Operation):
 class ListDeleteOperation(Operation):
     for_type = 'list'
     def __init__(self, index, length):
+        Operation.__init__(self)
         self.index = index
         self.length = length
 
     def pack(self):
-        return ["ListDeleteOperation", self.index, self.length]
+        return ["ListDeleteOperation", self._id, self.index, self.length]
 
     def apply(self, node):
         new = node.proto(children=node.children[:self.index] + node.children[self.index + self.length:])
@@ -128,11 +144,12 @@ class ListDeleteOperation(Operation):
 class ListSetIndexOperation(Operation):
     for_type = 'list'
     def __init__(self, index, value):
+        Operation.__init__(self)
         self.index = index
         self.value = value
 
     def pack(self):
-        return ["ListSetIndexOperation", self.index, self.value]
+        return ["ListSetIndexOperation", self._id, self.index, self.value]
 
     def apply(self, node):
         old = node.children[self.index]
@@ -151,11 +168,12 @@ class ListSetIndexOperation(Operation):
 class ListApplyIndexOperation(Operation):
     for_type = 'list'
     def __init__(self, index, operation):
+        Operation.__init__(self)
         self.index = index
         self.operation = operation
 
     def pack(self):
-        return ["ListApplyIndexOperation", self.index, self.operation.pack()]
+        return ["ListApplyIndexOperation", self._id, self.index, self.operation.pack()]
 
     def apply(self, node):
         new, reverse = self.operation.apply(node.children[self.index])
@@ -177,11 +195,12 @@ class ListApplyIndexOperation(Operation):
 class DictKeyApplyOperation(Operation):
     for_type = 'dict'
     def __init__(self, key, operation):
+        Operation.__init__(self)
         self.key = key
         self.operation = operation
 
     def pack(self):
-        return ["DictKeyApplyOperation", self.key, self.operation.pack()]
+        return ["DictKeyApplyOperation", self._id, self.key, self.operation.pack()]
 
     def apply(self, node):
         child = node.get_path(self.key)
@@ -220,4 +239,6 @@ op_lookup = {
 
 def unpack(args):
     klass = op_lookup[args[0]]
-    return klass(*args[1:])
+    k = klass(*args[2:])
+    k._id = args[1]
+    return k
