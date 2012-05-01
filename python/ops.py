@@ -10,7 +10,7 @@ class Operation(object):
     def __repr__(self):
         return "<Op: %s>" % self.pack()
 
-    def proto(self):
+    def clone(self):
         return unpack(self.pack())
 
 class CompoundOperation(Operation):
@@ -58,7 +58,7 @@ class StringInsertOperation(Operation):
         return ['StringInsertOperation', self._id, self.index, self.text]
         
     def apply(self, node):
-        node_value = node.obj_repr()
+        node_value = str(node.obj_repr())
         new = node.proto(node_value[:self.index] + self.text + node_value[self.index:])
         reverse = StringDeleteOperation(self.index, len(self.text))
         return new, reverse
@@ -74,7 +74,7 @@ class StringDeleteOperation(Operation):
         return ['StringDeleteOperation', self._id, self.index, self.length]
 
     def apply(self, node):
-        node_value = node.obj_repr()
+        node_value = str(node.obj_repr())
         new = node.proto(node_value[:self.index] + node_value[self.index + self.length:])
         reverse = StringInsertOperation(self.index, node_value[self.index:self.index+self.length])
         return new, reverse

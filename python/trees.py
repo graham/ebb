@@ -55,6 +55,9 @@ class Node(object):
         self.value = None
         self.children = []
 
+    def clone(self):
+        return Node.from_obj(self.obj_repr())
+
     def proto(self, value=None, children=None):
         p = Node(name=self.name, type_id=self.type, attr=self.attr)
         if value != None:
@@ -131,19 +134,25 @@ class Node(object):
         if type(obj) in (int, long, float, bool, str, unicode):
             self.value = json.dumps(obj)
         elif type(obj) in (Node,):
-            self.value = obj.value
+            if obj.value:
+                self.value = obj.value
+            elif obj.children:
+                self.children = obj.children
+            else:
+                raise Exception("Bad set value")
         else:
             self.children = Node.from_obj(obj)
 
     ## Nice things to have for testing.
 
-    def get_path(self, key, di='.'):
-        sp = key.split(di)
-        if len(sp) == 1:
-            return self._get(sp[0])
+    def get_path(self, key):
+        if not key:
+            return self
+        if len(key) == 1:
+            return self._get(key[0])
         else:
-            obj = self._get(sp[0])
-            return obj.get_path(di.join(sp[1:]))
+            obj = self._get(key[0])
+            return obj.get_path(key[1:])
 
     def _get(self, key):
         if self.type == TYPES['dict']:
@@ -151,7 +160,7 @@ class Node(object):
                 if key == i.attr['key']:
                     return i
             raise Exception('key not found %s' % key)
-        elif key.isdigit():
+        elif type(key) in (int, long):
             if self.type == TYPES['string']:
                 return self.value[int(key)]
             elif self.type == TYPES['list']:
@@ -161,13 +170,14 @@ class Node(object):
         else:
             raise Exception('invalid path')
 
-    def set_path(self, key, val, di='.'):
-        sp = key.split(di)
-        if len(sp) == 1:
-            return self._set(sp[0], val)
+    def set_path(self, key, val):
+        if not key:
+            return self.set_value(val)
+        if len(key) == 1:
+            return self._set(key[0], val)
         else:
-            obj = self._get(sp[0])
-            return obj.set_path(di.join(sp[1:]), val)
+            obj = self._get(key[0])
+            return obj.set_path(key[1:], val)
 
     def _set(self, key, value):
         if self.type == TYPES['dict']:
@@ -182,7 +192,7 @@ class Node(object):
             n.set_value(value)
             self.children.append(n)
             return n
-        elif key.isdigit():
+        elif type(key) in (int, long):
             if self.type == TYPES['string']:
                 self.value[int(key)] = value
             elif self.type == TYPES['list']:
@@ -195,13 +205,12 @@ class Node(object):
         else:
             raise Exception('invalid path')
 
-    def remove_path(self, key, di='.'):
-        sp = key.split(di)
-        if len(sp) == 1:
-            return self._remove(sp[0])
+    def remove_path(self, key):
+        if len(key) == 1:
+            return self._remove(key[0])
         else:
-            obj = self._get(sp[0])
-            return obj.remove_path(di.join(sp[1:]))
+            obj = self._get(key[0])
+            return obj.remove_path(key[1:])
 
     def _remove(self, key):
         if self.type == TYPES['dict']:
@@ -210,7 +219,7 @@ class Node(object):
                 if key != i.attr['key']:
                     new_children.append(i);
             self.children = new_children;
-        elif key.isdigit():
+        elif type(key) in (int, long):
             if self.type == TYPES['string']:
                 raise Exception('not supported')
             elif self.type == TYPES['list']:

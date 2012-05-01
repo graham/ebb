@@ -93,7 +93,7 @@ class TestTrees(unittest.TestCase):
 
         x.children.append(three)
 
-        leaf = x.get_path('three.0.one')
+        leaf = x.get_path(['three',0,'one'])
         self.assertEqual(leaf.obj_repr(), 1)
         
     def test_setter(self):
@@ -120,17 +120,17 @@ class TestTrees(unittest.TestCase):
         x.children.append(three)
 
         num = 8123819321
-        new_leaf = x.set_path('three.0.one', num)
+        x.set_path(['three',0,'one'], num)
         
-        leaf = x.get_path('three.0.one')
+        leaf = x.get_path(['three',0,'one'])
         self.assertEqual(leaf.obj_repr(), num)
 
-        x.set_path('three.1.two', 'blarg')
-        leaf = x.get_path('three.1.two')
+        x.set_path(['three',1,'two'], 'blarg')
+        leaf = x.get_path(['three',1,'two'])
         self.assertEqual(leaf.obj_repr(), 'blarg')
 
-        x.set_path('three.1', [1,2,3])
-        leaf = x.get_path('three')
+        x.set_path(['three',1], [1,2,3])
+        leaf = x.get_path(['three'])
         self.assertEqual(leaf.obj_repr(), [{'one':num}, [1,2,3]])
 
     def test_from_obj(self):
@@ -143,16 +143,16 @@ class TestTrees(unittest.TestCase):
         n = trees.Node.from_obj(l)
         self.assertEqual(n.obj_repr(), l)
 
-        n.remove_path('0')
+        n.remove_path([0])
         self.assertEqual(n.obj_repr(), [2,3, {'key':'value'}])
 
-        n.remove_path('2.key')
-        self.assertEqual(n.get_path('2').obj_repr(), {})
+        n.remove_path([2,'key'])
+        self.assertEqual(n.get_path([2]).obj_repr(), {})
         
         l_two = [1,2,3, {'key':'value', 'last':'chance', 'why':'on', 'earth':'would', 'you':'do', 'things':'thisway'}];
         l_two_expected = [1,2,3, {'key':'value', 'last':'chance', 'why':'on', 'you':'do', 'things':'thisway'}];
         n2 = trees.Node.from_obj(l_two)
-        n2.remove_path('3.earth')
+        n2.remove_path([3,'earth'])
         self.assertEqual(n2.obj_repr(), l_two_expected);
         
 if __name__ == '__main__':
