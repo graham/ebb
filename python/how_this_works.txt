@@ -1,0 +1,74 @@
+Ebb - Simple data types that support operational transforms.
+----------------
+
+Modules:
+    - trees = Representing all data types in simple tree structure.
+    - ops   = Operations that work on all data types.
+    - ns    = Easier management of the GOT include/exclude work.
+
+
+Building this was a pretty iterative process (so some warts still exist from previous iterations), starting with operations on strings and moving on up from there. I wrote all of the operations to work on lists and dictionaries before I started the "pathing" which allows you to work on objects within objects. As a result there are some operations that are probably never going to be created by a human (well, in some cases you may still want to but i'll get to that soon).
+
+
+How it actually works
+----------------
+If you have not read https://www.dropbox.com/s/25bsakc659j4kg9/10.1.1.100.74.pdf or https://www.dropbox.com/s/4xj41cuxlj6nspx/p63-sun.pdf it's time that you at least go read one of these two documents as it will help you greatly to understand the rest of this document (and the code you are inevitably already looking at).
+
+Ok, so you have your basic data types:
+    - Boolean
+    - String
+    - Number
+    - List
+    - Dictionary
+    - Null
+
+For now I'll go over the easy ones:
+    - Boolean
+    - String
+    - Number
+    - Null
+
+There are supported operations for all of these data types, in many ways these are the easy ones, every operation has a corresponding "opposite" operation that you can apply to the result to "undo" the previous operation. This is true for all of the operations in Ebb. Whenever you apply an operation you'll get two things back.
+
+     new_data, reverse_operation = op.apply(my_data)
+
+I've tried pretty hard to make sure that no operation actually modifies the data of the original object (this has been tested but there is some room for this to leak). So "my_data" should never change. So, you can always apply the reverse operation to get your old data back (as well as getting the reverse_of_the_reverse operation).
+
+     orig_data, rev_rev = reverse_operation(new_data)
+     orig_data == my_data
+     op == rev_rev
+
+So, now the fun stuff, as described in the "Generalizing Operational Transformation" ( https://www.dropbox.com/s/25bsakc659j4kg9/10.1.1.100.74.pdf ) you can represent the two additional data types (list/dict) as trees of data. However, having unique global ideas for every object can become cumbersome and too heavyweight. So all objects are recorded as a "path" from the parent object (in this case, parent objects are "keys" in a "key/value" store). Applying Dict/List operations allows you to change the data within the tree of data. Paths are represented as integers for array indexes and keys for dictionary entries.
+
+    [ 1, 2, 3 ] # the path to (2) is it's index.
+    [ [1] ]     # path to (1) is [0,0]
+
+All paths are represented as lists of indexes or keys, this allows the path to be modified (if another transform modifies the list) without affecting the original transformation (although that can be modified too under the right circumstances).
+
+
+Pulling it all together
+----------------
+
+The first implementation is a key/value store, which stores "Documents" in collections called "Namespaces". Documents can take care of all of the "pathing" requirements assuming the user can create the needed "operations" to work on the other data types.
+
+*** Side Note ***
+    This is where it gets very tricky, this is going to be a long "border" case to explain so bear with me.
+
+    When you are using the document class to handle "include/exclude" for you need not worry about any modifications on lists/dicts other than "create or delete". While the ListApplyIndexOperation and DictKeyApplyOperation exist they will not be properly transformed when another operation is created that affects them. The document class should take care of all of this for you. Now, should you want to ensure that a modification happens to a specific key regardless of future changes you can implement it this way, but with the exception of some dictionary key examples I don't see this being common.
+
+    TLDR: don't use ListSet/ListApply/DictApply unless you really know what you are doing.
+*** End Note ***
+
+Using the document class is as easy as calling:
+
+      d = Document()
+      op = NumberIncrementOperation(100)
+      d.include_operation([1], op)
+
+Assuming 'd' is a list, this will apply the operation to the second element in the list. (should you insert another element in the list before you apply this transformation it will be the third element).
+
+Most of the heavy lifting will be taken care of for you, or abstracted away in a higher level object or interface. Take a look at the tests for a better understanding of the best way to handle all cases.
+
+For now this should cover a basic understanding of how this whole thing works. Moving and Dropping dictionary keys needs to be implemented (possibly across keys, but that seems like a bad idea). Some experimental data types might be interesting (sets, scored_sets [like redis], geo coordinates, write_only_logs) but for now the data types will stay simple.
+
+-graham
