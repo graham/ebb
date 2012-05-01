@@ -121,17 +121,5 @@ class TestOperations(unittest.TestCase):
         step_back, revert_step_back = revert_second.apply(second)
         self.assertEqual(second.obj_repr(), [1,2,{'one':'hello'}])
         
-    def test_comp_operations(self):
-        init = trees.Node.from_obj([1,2,3])
-        op1 = ops.ListApplyIndexOperation(0, ops.NumberIncrementOperation(50))
-        op2 = ops.ListApplyIndexOperation(1, ops.NumberIncrementOperation(10))
-    
-        op = ops.CompoundOperation( [op1, op2] )
-        result, reverse = op.apply(init)
-        self.assertEqual(result.obj_repr(), [51, 12, 3])
-        
-        back, inverse = reverse.apply(result)
-        self.assertEqual(back.obj_repr(), init.obj_repr())
-
 if __name__ == '__main__':
     unittest.main()

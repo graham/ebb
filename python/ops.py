@@ -13,22 +13,6 @@ class Operation(object):
     def clone(self):
         return unpack(self.pack())
 
-class CompoundOperation(Operation):
-    def __init__(self, operations):
-        Operation.__init__(self)
-        self.operations = operations
-
-    def pack(self):
-        return ['CompoundOperation', self._id, [i.pack() for i in self.operations]]
-
-    def apply(self, node):
-        cur = node
-        revs = []
-        for i in self.operations:
-            cur, reverse = i.apply(cur)
-            revs.append(reverse)
-        return cur, CompoundOperation(revs)
-
 ### Number Operations.
 
 class NumberIncrementOperation(Operation):
@@ -214,17 +198,28 @@ class DictKeyApplyOperation(Operation):
         reverse_op = DictKeyApplyOperation(self.key, reverse)
         return new_node, reverse_op
 
+## Work to do.
+class DictMoveKeyOperation(Operation):
+    pass
+class DictDropKeyOperation(Operation):
+    pass
 
-### Things that still need to be done.
-class MoveBookmarkOperation(Operation): 
+# sets
+class SetAddOperation(Operation):
     pass
-class CopyBookmarkOperation(Operation):
+class SetRemoveOperation(Operation):
     pass
-class PruneBookmarkOperation(Operation):
+
+# zsets
+class ScoredSetAddOperation(Operation):
     pass
+class ScoredSetApplyOperation(Operation):
+    pass
+class ScoredSetDropOperation(Operation):
+    pass
+
 
 op_lookup = {
-    'CompoundOperation':CompoundOperation,
     'NumberIncrementOperation':NumberIncrementOperation,
     'StringInsertOperation':StringInsertOperation,
     'StringDeleteOperation':StringDeleteOperation,
