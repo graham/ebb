@@ -1,7 +1,6 @@
 import trees
 import uuid
 
-
 def safe_bound(x):
     if x > 0:
         return x
@@ -19,10 +18,6 @@ class Operation(object):
 
     def clone(self):
         return unpack(self.pack())
-
-    def path_hit(self, target_path, path):
-        i = all([i == j for i, j in zip(target_path, path)])
-        return target_path and (path != target_path) and i
 
     ###### Now it gets fun, this should eventually be split out into classes or 
     ###### some sort of lookup table so that the user could feasibly define their

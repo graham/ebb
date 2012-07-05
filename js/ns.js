@@ -40,7 +40,7 @@ var ns = (function() {
         };
 
         Document.prototype.exclude_operation = function(operation) {
-
+            
         };
 
         Document.prototype.include_operation = function(path, operation, ts) {

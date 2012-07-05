@@ -3,10 +3,22 @@ var util = require('util');
 var ops = (function() {
         var Operation = function() {};
         Operation.prototype.clone = function() {
-            return unpack(this.pack);
+            return unpack(this.pack());
         };
         Operation.prototype.toString = function() {
             return "<fuck you>";
+        };
+
+        Operation.handle_mutate = function(root, tpath, oplist) {
+            var new_list = [];
+            for(var index in oplist) {
+                var row = oplist[index];
+                var new_row = row;
+
+                if (tpath && (tpath != row[1])) {
+                    if (true) {}
+                }
+            }
         };
 
         // Number Operations.
