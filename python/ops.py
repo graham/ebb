@@ -24,6 +24,82 @@ class Operation(object):
         i = all([i == j for i, j in zip(target_path, path)])
         return target_path and (path != target_path) and i
 
+    ###### Now it gets fun, this should eventually be split out into classes or 
+    ###### some sort of lookup table so that the user could feasibly define their
+    ###### own, although, that also seems like a bad idea.
+    def handle_mutate(self, root, tpath, oplist):
+        new_list = []
+        for row in oplist:
+            new_row = row
+            
+            if tpath and tpath != row[1]:
+                if all([i == j for i,j in zip(tpath, row[1])]):
+                    new_row = self.handle_mutate_with_path(row, tpath)
+                new_list.append(new_row)
+            else:
+                if self.index > row[2].index:
+                    pass
+                else:
+                    new_row = self.handle_mutate_without_path(row, tpath)
+
+                newroot, newrev = new_row[2].apply(root)
+                new_list.append([new_row[0], new_row[1], new_row[2], newrev])
+                root = newroot
+
+        return new_list
+
+    def handle_mutate_with_path(self, row, tpath):
+        if self.for_type == 'string':
+            return self.handle_mutate_with_path_string(row, tpath)
+        elif self.for_type == 'list':
+            return self.handle_mutate_with_path_list(row, tpath)
+        else:
+            return row
+        
+    def handle_mutate_with_path_string(self, row, tpath):
+        p = row[2].clone()
+        if type(self) == StringInsertOperation:
+            p.index = safe_bound(p.index + len(self.text))
+        elif type(self) == StringDeleteOperation:
+            p.index = safe_bound(p.index - self.length)
+        return [row[0], row[1], p, row[3]]
+
+    def handle_mutate_with_path_list(self, row, tpath):
+        path = row[1]
+        if type(self) == ListInsertOperation:
+            path[len(tpath)] = safe_bound(path[len(tpath)] + len(self.value))
+        elif type(self) == ListDeleteOperation:
+            path[len(tpath)] = safe_bound(path[len(tpath)] - self.length)
+
+        return [row[0], path, row[2], row[3]]
+
+    def handle_mutate_without_path(self, row, tpath):
+        if self.for_type == 'string':
+            return self.handle_mutate_without_path_string(row, tpath)
+        elif self.for_type == 'list':
+            return self.handle_mutate_without_path_list(row, tpath)
+        else:
+            return row
+        
+    def handle_mutate_without_path_string(self, row, tpath):
+        p = row[2].clone()
+
+        if type(self) == StringInsertOperation:
+            p.index = safe_bound(p.index + len(self.text))
+        elif type(self) == StringDeleteOperation:
+            p.index = safe_bound(p.index - self.length)
+
+        return [row[0], row[1], p, row[3]]
+
+    def handle_mutate_without_path_list(self, row, tpath):
+        p = row[2].clone()
+        if type(self) == ListInsertOperation:
+            p.index = safe_bound(p.index + len(self.value))
+        elif type(self) == ListDeleteOperation:
+            p.index = safe_bound(p.index - self.length)
+        return [row[0], row[1], p, row[3]]
+
+
 
 ### Number Operations.
 class NumberIncrementOperation(Operation):

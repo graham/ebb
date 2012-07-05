@@ -11,6 +11,12 @@ TYPES = {
     'null':5
 }
 
+APPLY_TYPES = [
+    TYPES['number'],
+    TYPES['boolean'],
+    TYPES['null']
+]
+
 #I've thought quite a bit about having more data types, things like
 #sets, sorted_sets, packed_sets, 
 
@@ -232,3 +238,4 @@ class Node(object):
                 raise Exception('Invalid path: cannot index type %s' % self.type)
         else:
             raise Exception('invalid path')
+

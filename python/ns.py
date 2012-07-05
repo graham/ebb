@@ -48,10 +48,6 @@ class Document(object):
             s.append(json.dumps([i[0], i[1], i[2].pack()]))
         return '\n'.join(s)
 
-    @classmethod
-    def unpack(self, type, data):
-        pass
-
     def exclude_operation(self, operation):
         # ensure that this operation actually happened.
         assert operation._id in [i[2]._id for i in self.history_buffer]
@@ -130,7 +126,7 @@ class Document(object):
             x.root.set_path(path, new)
             x.history_buffer.append([ts, path, operation, rev])
 
-            mutated_unroll = self.mutate_based_on(x.root.clone(), path, to_unroll, operation)
+            mutated_unroll = list(self.mutate_based_on(x.root.clone(), path, to_unroll, operation))
 
             for ots, opath, forward, backward in mutated_unroll:
                 new, rev = forward.apply(x.root.get_path(opath))
@@ -141,53 +137,14 @@ class Document(object):
 
     def mutate_based_on(self, root, tpath, oplist, reference_op):
         target_node = root.get_path(tpath)
-        if reference_op == None:
+
+        if reference_op == None or target_node.type in trees.APPLY_TYPES:
             return reversed(oplist)
-
-        if target_node.type in (trees.TYPES['number'], trees.TYPES['boolean'], trees.TYPES['null']):
-            # these ops do not have pathing or children.
+        
+        if target_node.type in (trees.TYPES['string'], trees.TYPES['list']):
+            return reversed(reference_op.handle_mutate(root, tpath, oplist))
+        elif target_node.type in (trees.TYPES['dict'], ):
             return reversed(oplist)
-        elif target_node.type in (trees.TYPES['list'], trees.TYPES['string']):
-            new_list = []
-
-            for ts, path, operation, reverse in oplist:
-                p = operation.clone()
-
-                if tpath and tpath != path: #if there is a path to the target
-                    if all([i == j for i,j in zip(tpath, path)]):
-                        if type(reference_op) == ops.ListInsertOperation:
-                            path[len(tpath)] = safe_bound(path[len(tpath)] + len(reference_op.value))
-                        elif type(reference_op) == ops.ListDeleteOperation:
-                            path[len(tpath)] = safe_bound(path[len(tpath)] - reference_op.length)
-
-                        elif type(reference_op) == ops.StringInsertOperation:
-                            p.index = safe_bound(p.index + len(reference_op.text))
-                            operation = p
-                        elif type(reference_op) == ops.StringDeleteOperation:
-                            p.index = safe_bound(p.index - reference_op.length)
-                            operation = p
-                    new_list.append([ts, path, operation, reverse])
-                else:
-                    if reference_op.index > operation.index:
-                        pass
-                    else:
-                        if type(reference_op) == ops.ListInsertOperation:
-                            p.index = safe_bound(p.index + len(reference_op.value))
-                        elif type(reference_op) == ops.ListDeleteOperation:
-                            p.index = safe_bound(p.index - reference_op.length)
-
-                        elif type(reference_op) == ops.StringInsertOperation:
-                            p.index = safe_bound(p.index + len(reference_op.text))
-                        elif type(reference_op) == ops.StringDeleteOperation:
-                            p.index = safe_bound(p.index - reference_op.length)
-
-                    newroot, newrev = p.apply(root)
-                    new_list.append([ts, path, p, newrev])
-                    root = newroot
-            return reversed(new_list)
-        elif target_node.type == trees.TYPES['dict']:
-            # right now this isn't anything, but in order to handle key changes or moves
-            # this will need to be implemented. If not, then this can be left as is.
-            return reverse(oplist)
         else:
-            return reverse(oplist)
+            ## this is a problem.
+            return reversed(oplist)
