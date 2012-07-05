@@ -1,8 +1,15 @@
 import trees
 import uuid
 
-### Base Operation.
 
+def safe_bound(x):
+    if x > 0:
+        return x
+    else:
+        return 0
+
+
+### Base Operation.
 class Operation(object):
     def __init__(self):
         self._id = str(uuid.uuid4())
@@ -13,14 +20,19 @@ class Operation(object):
     def clone(self):
         return unpack(self.pack())
 
-### Number Operations.
+    def path_hit(self, target_path, path):
+        i = all([i == j for i, j in zip(target_path, path)])
+        return target_path and (path != target_path) and i
 
+
+### Number Operations.
 class NumberIncrementOperation(Operation):
     for_type = 'number'
+
     def __init__(self, amount):
         Operation.__init__(self)
         self.amount = amount
-        
+
     def pack(self):
         return ['NumberIncrementOperation', self._id, self.amount]
 
@@ -29,10 +41,11 @@ class NumberIncrementOperation(Operation):
         reverse = NumberIncrementOperation(self.amount * (-1))
         return new, reverse
 
-### String Operations.
 
+### String Operations.
 class StringInsertOperation(Operation):
     for_type = 'string'
+
     def __init__(self, index, text):
         Operation.__init__(self)
         self.index = index
@@ -40,15 +53,19 @@ class StringInsertOperation(Operation):
 
     def pack(self):
         return ['StringInsertOperation', self._id, self.index, self.text]
-        
+
     def apply(self, node):
         node_value = str(node.obj_repr())
-        new = node.proto(node_value[:self.index] + self.text + node_value[self.index:])
+        nv = node_value[:self.index] + self.text + node_value[self.index:]
+        new = node.proto(nv)
+
         reverse = StringDeleteOperation(self.index, len(self.text))
         return new, reverse
 
+
 class StringDeleteOperation(Operation):
     for_type = 'string'
+
     def __init__(self, index, length):
         Operation.__init__(self)
         self.index = index
@@ -109,7 +126,7 @@ class ListInsertOperation(Operation):
         new = node.proto(children=node.children[:self.index] + self.value + node.children[self.index:])
         reverse = ListDeleteOperation(self.index, len(self.value))
         return new, reverse
-        
+
 class ListDeleteOperation(Operation):
     for_type = 'list'
     def __init__(self, index, length):

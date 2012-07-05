@@ -276,6 +276,10 @@ class TestDocument(unittest.TestCase):
         d = d.include_operation([0], op2, ts=900)
         self.assertEqual(d.root.obj_repr(), [ [333, 1,2,1003], [4,5,6], [7,8,[9]] ])
 
+    def test_query(self):
+        d = ns.Document( trees.Node.from_obj([1,2,3,4,5]) )
+        
+
 
 if __name__ == '__main__':
     unittest.main()

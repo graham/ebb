@@ -1,8 +1,6 @@
 from ns import Document
 
 class DocumentHelper(Document):
-    def command(self, path, command, *args):
-        if command in ('incr', 'decr',):
-            pass
+    def command(self, key, path, command, *args):
+        node = self.root.get_path(path)
         
-            

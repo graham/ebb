@@ -2,12 +2,20 @@ var util = require('util');
 
 var ops = (function() {
         var Operation = function() {};
+        Operation.prototype.clone = function() {
+            return unpack(this.pack);
+        };
+        Operation.prototype.toString = function() {
+            return "<fuck you>";
+        };
 
         // Number Operations.
         var NumberIncrementOperation = function(amount) {
+            this.for_type = 'number';
             this.amount = amount;
         };
-
+        NumberIncrementOperation.prototype = new Operation();
+        
         NumberIncrementOperation.prototype.apply = function(node) {
             var new_node = node.proto({'value':node.obj_repr() + this.amount});
             var reverse = new NumberIncrementOperation(this.amount * (-1));
@@ -22,9 +30,11 @@ var ops = (function() {
 
         // String Operations
         var StringInsertOperation = function(index, text) {
+            this.for_type = 'string';
             this.index = index;
             this.text = text;
         };
+        StringInsertOperation.prototype = new Operation();
 
         StringInsertOperation.prototype.apply = function(node) {
             var node_value = node.obj_repr();
@@ -38,9 +48,11 @@ var ops = (function() {
         };
 
         var StringDeleteOperation = function(index, length) {
+            this.for_type = 'string';
             this.index = index;
             this.length = length;
         };
+        StringDeleteOperation.prototype = new Operation();
 
         StringDeleteOperation.prototype.apply = function(node) {
             var node_value = node.obj_repr();
@@ -54,8 +66,10 @@ var ops = (function() {
         };
 
         var StringSetOperation = function(value) {
+            this.for_type = 'string';
             this.value = value;
         };
+        StringSetOperation.prototype = new Operation();
 
         StringSetOperation.prototype.apply = function(node) {
             var new_node = node.proto({'value':this.value});
@@ -70,8 +84,10 @@ var ops = (function() {
 
         // Boolean Operations
         var BooleanSetOperation = function(value) {
+            this.for_type = 'boolean';
             this.value = value;
         };
+        BooleanSetOperation.prototype = new Operation();
 
         BooleanSetOperation.prototype.apply = function(node) {
             var new_node = node.proto({'value':this.value});
@@ -86,9 +102,11 @@ var ops = (function() {
 
         // List Operations
         var ListInsertOperation = function(index, value) {
+            this.for_type = 'list';
             this.index = index;
             this.value = value;
         };
+        ListInsertOperation.prototype = new Operation();
 
         ListInsertOperation.prototype.apply = function(node) {
             var new_node = node.proto({
@@ -106,9 +124,11 @@ var ops = (function() {
         };
 
         var ListDeleteOperation = function(index, length) {
+            this.for_type = 'list';
             this.index = index;
             this.length = length;
         };
+        ListDeleteOperation.prototype = new Operation();
 
         ListDeleteOperation.prototype.apply = function(node) {
             var new_node = node.proto({
@@ -125,9 +145,11 @@ var ops = (function() {
         };
 
         var ListSetIndexOperation = function(index, value) {
+            this.for_type = 'list';
             this.index = index;
             this.value = value;
         };
+        ListSetIndexOperation.prototype = new Operation();
 
         ListSetIndexOperation.prototype.apply = function(node) {
             var old = node.children[this.index];
@@ -148,9 +170,11 @@ var ops = (function() {
         };
 
         var ListApplyIndexOperation = function(index, operation) {
+            this.for_type = 'list';
             this.index = index;
             this.operation = operation;
         };
+        ListApplyIndexOperation.prototype = new Operation();
 
         ListApplyIndexOperation.prototype.apply = function(node) {
             var nr = this.operation.apply(node.children[this.index]);
@@ -173,9 +197,11 @@ var ops = (function() {
         
         // Dictionary Key Apply
         var DictKeyApplyOperation = function(key, operation) {
+            this.for_type = 'dict';
             this.key = key;
             this.operation = operation;
         };
+        DictKeyApplyOperation.prototype = new Operation();
 
         DictKeyApplyOperation.prototype.apply = function(node) {
             var child = node.get_path(this.key);

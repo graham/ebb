@@ -28,6 +28,15 @@ class Namespace(object):
     def get_value(self, key):
         return self.docs[key].root.obj_repr()
 
+    def query(self, match, func):
+        for i in self.docs:
+            pass
+
+    def apply(self, match, func):
+        for i in self.docs:
+            pass
+
+
 class Document(object):
     def __init__(self, root=None):
         self.root = root
@@ -51,7 +60,7 @@ class Document(object):
 
         to_unroll = []
         for hb in reversed(self.history_buffer):
-            to_unroll.append( hb )
+            to_unroll.append(hb)
             if hb[2]._id == operation._id:
                 inverse_of_op = hb
                 break;
@@ -134,51 +143,51 @@ class Document(object):
         target_node = root.get_path(tpath)
         if reference_op == None:
             return reversed(oplist)
-        else:
-            if target_node.type in (trees.TYPES['number'], trees.TYPES['boolean'], trees.TYPES['null']):
-                # these ops do not have pathing or children.
-                return reversed(oplist)
-            elif target_node.type in (trees.TYPES['list'], trees.TYPES['string']):
-                new_list = []
 
-                for ts, path, operation, reverse in oplist:
-                    p = operation.clone()
-                    
-                    if tpath and tpath != path: #if there is a path to the target
-                        if all([i == j for i,j in zip(tpath, path)]):
-                            if type(reference_op) == ops.ListInsertOperation:
-                                path[len(tpath)] = safe_bound(path[len(tpath)] + len(reference_op.value))
-                            elif type(reference_op) == ops.ListDeleteOperation:
-                                path[len(tpath)] = safe_bound(path[len(tpath)] - reference_op.length)
+        if target_node.type in (trees.TYPES['number'], trees.TYPES['boolean'], trees.TYPES['null']):
+            # these ops do not have pathing or children.
+            return reversed(oplist)
+        elif target_node.type in (trees.TYPES['list'], trees.TYPES['string']):
+            new_list = []
 
-                            elif type(reference_op) == ops.StringInsertOperation:
-                                p.index = safe_bound(p.index + len(reference_op.text))
-                                operation = p
-                            elif type(reference_op) == ops.StringDeleteOperation:
-                                p.index = safe_bound(p.index - reference_op.length)
-                                operation = p
-                        new_list.append([ts, path, operation, reverse])
+            for ts, path, operation, reverse in oplist:
+                p = operation.clone()
+
+                if tpath and tpath != path: #if there is a path to the target
+                    if all([i == j for i,j in zip(tpath, path)]):
+                        if type(reference_op) == ops.ListInsertOperation:
+                            path[len(tpath)] = safe_bound(path[len(tpath)] + len(reference_op.value))
+                        elif type(reference_op) == ops.ListDeleteOperation:
+                            path[len(tpath)] = safe_bound(path[len(tpath)] - reference_op.length)
+
+                        elif type(reference_op) == ops.StringInsertOperation:
+                            p.index = safe_bound(p.index + len(reference_op.text))
+                            operation = p
+                        elif type(reference_op) == ops.StringDeleteOperation:
+                            p.index = safe_bound(p.index - reference_op.length)
+                            operation = p
+                    new_list.append([ts, path, operation, reverse])
+                else:
+                    if reference_op.index > operation.index:
+                        pass
                     else:
-                        if reference_op.index > operation.index:
-                            pass
-                        else:
-                            if type(reference_op) == ops.ListInsertOperation:
-                                p.index = safe_bound(p.index + len(reference_op.value))
-                            elif type(reference_op) == ops.ListDeleteOperation:
-                                p.index = safe_bound(p.index - reference_op.length)
+                        if type(reference_op) == ops.ListInsertOperation:
+                            p.index = safe_bound(p.index + len(reference_op.value))
+                        elif type(reference_op) == ops.ListDeleteOperation:
+                            p.index = safe_bound(p.index - reference_op.length)
 
-                            elif type(reference_op) == ops.StringInsertOperation:
-                                p.index = safe_bound(p.index + len(reference_op.text))
-                            elif type(reference_op) == ops.StringDeleteOperation:
-                                p.index = safe_bound(p.index - reference_op.length)
+                        elif type(reference_op) == ops.StringInsertOperation:
+                            p.index = safe_bound(p.index + len(reference_op.text))
+                        elif type(reference_op) == ops.StringDeleteOperation:
+                            p.index = safe_bound(p.index - reference_op.length)
 
-                        newroot, newrev = p.apply(root)
-                        new_list.append([ts, path, p, newrev])
-                        root = newroot
-                return reversed(new_list)
-            elif target_node.type == trees.TYPES['dict']:
-                # right now this isn't anything, but in order to handle key changes or moves
-                # this will need to be implemented. If not, then this can be left as is.
-                return reverse(oplist)
-            else:
-                return reverse(oplist)
+                    newroot, newrev = p.apply(root)
+                    new_list.append([ts, path, p, newrev])
+                    root = newroot
+            return reversed(new_list)
+        elif target_node.type == trees.TYPES['dict']:
+            # right now this isn't anything, but in order to handle key changes or moves
+            # this will need to be implemented. If not, then this can be left as is.
+            return reverse(oplist)
+        else:
+            return reverse(oplist)
