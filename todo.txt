@@ -1,0 +1,6 @@
+Ebb:
+        python:
+                - ensure that replay works on multiple machines (or multiple instances with the same sql database)
+
+        js:
+                - make sure it works at all
