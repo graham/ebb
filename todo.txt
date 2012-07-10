@@ -1,6 +1,11 @@
-Ebb:
-        python:
-                - ensure that replay works on multiple machines (or multiple instances with the same sql database)
+	Transformations:
+		python:
+			- ensure that replay works on multiple machines (or multiple instances with the same sql database)
+		js:
+			- make sure it is feature complete.
 
-        js:
-                - make sure it works at all
+	Storage:
+		Storage will likely search for some sort of key value store. With a storage mechanizm for "data" and another for "meta-data". The interaction between server and client is actually VERY similar to the client/server interaction with Dropbox. However, the "conflict" scenarios are quite different.
+		
+	Usage:
+		One of the things that was hardest to figure out (something Rian and I talked about for some time) was exactly how to handle offline edits.

@@ -21,6 +21,7 @@ class Namespace(object):
             doc = Document()
         newd = doc.include_operation(path, operation)
         self.docs[key] = newd
+        return newd
 
     def get(self, key):
         return self.docs[key]
@@ -28,25 +29,22 @@ class Namespace(object):
     def get_value(self, key):
         return self.docs[key].root.obj_repr()
 
-    def query(self, match, func):
-        for i in self.docs:
-            pass
-
-    def apply(self, match, func):
-        for i in self.docs:
-            pass
-
 
 class Document(object):
     def __init__(self, root=None):
         self.root = root
         self.history_buffer = []
-    
+
     def pack(self):
         s = []
         for i in self.history_buffer:
             s.append(json.dumps([i[0], i[1], i[2].pack()]))
         return '\n'.join(s)
+    
+    def __str__(self):
+        return str(self.root.obj_repr())
+    def __repr__(self):
+        return self.__str__()
 
     def exclude_operation(self, operation):
         # ensure that this operation actually happened.

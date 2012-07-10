@@ -95,7 +95,6 @@ class Operation(object):
         return [row[0], row[1], p, row[3]]
 
 
-
 ### Number Operations.
 class NumberIncrementOperation(Operation):
     for_type = 'number'
