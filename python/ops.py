@@ -12,6 +12,8 @@ def safe_bound(x):
 class Operation(object):
     def __init__(self):
         self._id = str(uuid.uuid4())
+        #for the new way of thinking
+        self.target_commit = None
 
     def __repr__(self):
         return "<Op: %s>" % self.pack()
@@ -93,7 +95,19 @@ class Operation(object):
         elif type(self) == ListDeleteOperation:
             p.index = safe_bound(p.index - self.length)
         return [row[0], row[1], p, row[3]]
+    ### End of GOT type conflict resolution.
 
+    ### Begin Pavelian History Maintenence.
+
+    def cross_merge(self, previous_transform):
+        assert self.for_type == previous_transform.for_type
+
+        if self.for_type in trees.APPLY_TYPES:
+            return self
+        elif self.for_type in (trees.TYPES['string'], trees.TYPES['list']):
+            pass
+
+    ### End Pavelian History Maintenence.
 
 ### Number Operations.
 class NumberIncrementOperation(Operation):

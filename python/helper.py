@@ -25,4 +25,5 @@ class NamespaceHelper(Namespace):
         pass
     def s_delete(self, key, index, length):
         pass
+
 x = NamespaceHelper('test')
