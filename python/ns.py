@@ -9,19 +9,31 @@ def safe_bound(x):
     else:
         return 0
 
+
 class Namespace(object):
     def __init__(self, name):
         self.name = name
         self.docs = {}
+        self.constructor = Document
+        self.dirty_docs = []
+        self.dirty_ops = []
 
     def execute(self, key, path, operation):
         if key in self.docs:
             doc = self.docs[key]
         else:
-            doc = Document()
+            doc = self.constructor()
         newd = doc.include_operation(path, operation)
+
+        self.dirty_docs.append([key, newd])
+        self.dirty_ops.append([key, path, operation])
+
         self.docs[key] = newd
         return newd
+
+    def flush(self):
+        self.dirty_docs = []
+        self.dirty_ops = []
 
     def get(self, key):
         return self.docs[key]
@@ -29,6 +41,18 @@ class Namespace(object):
     def get_value(self, key):
         return self.docs[key].root.obj_repr()
 
+class NamespaceFS(Namespace):
+    ROOT = 'data/'
+
+    def flush(self):
+        for key, rev in self.dirty_docs:
+            path_to_key = self.ROOT
+
+        for key, path, op in self.dirty_ops:
+            pass
+
+        self.dirty_docs = []
+        self.dirty_ops = []
 
 class Document(object):
     def __init__(self, root=None):
@@ -59,7 +83,7 @@ class Document(object):
                 inverse_of_op = hb
                 break;
 
-        x = Document(self.root.clone())
+        x = self.__class__(self.root.clone())
 
         for hb in self.history_buffer:
             if hb[2]._id != operation._id:
@@ -97,7 +121,7 @@ class Document(object):
             target_root.set_path(path, new)
             new = target_root
                 
-            x = Document(new.clone())
+            x = self.__class__(new.clone())
             for i in self.history_buffer:
                 x.history_buffer.append(i)
             x.history_buffer.append([ts, path, operation, reverse])
@@ -108,7 +132,7 @@ class Document(object):
                 if ts < hb[0]:
                     to_unroll.append(hb)
 
-            x = Document(self.root.clone())
+            x = self.__class__(self.root.clone())
 
             for hb in self.history_buffer:
                 if ts >= hb[0]:
@@ -124,7 +148,7 @@ class Document(object):
             x.root.set_path(path, new)
             x.history_buffer.append([ts, path, operation, rev])
 
-            mutated_unroll = list(self.mutate_based_on(x.root.clone(), path, to_unroll, operation))
+            mutated_unroll = self.mutate_based_on(x.root.clone(), path, to_unroll, operation)
 
             for ots, opath, forward, backward in mutated_unroll:
                 new, rev = forward.apply(x.root.get_path(opath))
@@ -146,3 +170,5 @@ class Document(object):
         else:
             ## this is a problem.
             return reversed(oplist)
+
+
