@@ -1,6 +1,11 @@
 import ops
 from ns import Namespace
 
+# Not really intended to be part of the final product
+# but this helper object can help define how developers
+# end up interacting with the namespaces. For some creating
+# the actual operations might be too difficult.
+
 class NamespaceHelper(Namespace):
     def _parse(self, key):
         res = key.split('.', 1)
