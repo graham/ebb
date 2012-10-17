@@ -11,6 +11,10 @@ def safe_bound(x):
 
 
 class Namespace(object):
+    # Manages a set of keys, could feasibly have multiple
+    # 'cursors' making modifications as well as having multiple
+    # 'users' making modifications, generally speaking changes
+    # will not cross a namespace boundry... generally.
     def __init__(self, name):
         self.name = name
         self.docs = {}
@@ -53,6 +57,12 @@ class Namespace(object):
 #         self.dirty_ops = []
 
 class Document(object):
+    # The object that we are storing data in,
+    # for each key there is n documents, however,
+    # each of these documents should have a shared parent
+    # the only time they don't would be if
+    #  a. something is seriously wrong.
+    #  b. the shared parent has been garbage collected.
     def __init__(self, root=None):
         self.root = root
         self.history_buffer = []

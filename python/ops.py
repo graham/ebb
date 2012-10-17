@@ -98,7 +98,6 @@ class Operation(object):
     ### End of GOT type conflict resolution.
 
     ### Begin Pavelian History Maintenence.
-
     def cross_merge(self, previous_transform):
         assert self.for_type == previous_transform.for_type
 
@@ -106,7 +105,6 @@ class Operation(object):
             return self
         elif self.for_type in (trees.TYPES['string'], trees.TYPES['list']):
             pass
-
     ### End Pavelian History Maintenence.
 
 ### Number Operations.
