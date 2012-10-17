@@ -41,18 +41,16 @@ class Namespace(object):
     def get_value(self, key):
         return self.docs[key].root.obj_repr()
 
-class NamespaceFS(Namespace):
-    ROOT = 'data/'
-
-    def flush(self):
-        for key, rev in self.dirty_docs:
-            path_to_key = self.ROOT
-
-        for key, path, op in self.dirty_ops:
-            pass
-
-        self.dirty_docs = []
-        self.dirty_ops = []
+#ignore this for now
+# class NamespaceFS(Namespace):
+#     ROOT = 'data/'
+#     def flush(self):
+#         for key, rev in self.dirty_docs:
+#             path_to_key = self.ROOT + 'asdf'
+#         for key, path, op in self.dirty_ops:
+#             pass
+#         self.dirty_docs = []
+#         self.dirty_ops = []
 
 class Document(object):
     def __init__(self, root=None):

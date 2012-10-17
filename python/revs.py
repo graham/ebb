@@ -27,4 +27,3 @@ class Commit(object):
 def examples():
     r = Revision(trees.Node.from_obj(10))
     c1 = Commit(r, [ops.NumberIncrementOperation(10)])
-    r2 = c1.walk_forward()

@@ -28,7 +28,6 @@ class TestFSStorage(unittest.TestCase):
         newx = x.get('test')
         
         self.assertEqual(newx.root.obj_repr(), 10)
-
         x.flush()
 
 

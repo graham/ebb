@@ -3,8 +3,7 @@ Ebb:
 		python:
 			- ensure that replay works on multiple machines (or multiple instances with the same sql database)
 		js:
-			- make sure it is feature complete.
-
+			- canceling this in favor of coffee script. 
 	Storage:
 		Storage will likely search for some sort of key value store. With a storage mechanizm for "data" and another for "meta-data". The interaction between server and client is actually VERY similar to the client/server interaction with Dropbox. However, the "conflict" scenarios are quite different.
 		
