@@ -20,15 +20,15 @@ class TestFSStorage(unittest.TestCase):
         x.execute('test', [], ops.NumberIncrementOperation(10))
         self.assertEqual(x.get('test').__class__, ns.Document)
 
-    def tests_storage_basic(self):
-        x = ns.NamespaceFS('test_namespace')
-        op = ops.NumberIncrementOperation(10)
+    # def tests_storage_basic(self):
+    #     x = ns.NamespaceFS('test_namespace')
+    #     op = ops.NumberIncrementOperation(10)
 
-        x.execute('test', [], op)
-        newx = x.get('test')
+    #     x.execute('test', [], op)
+    #     newx = x.get('test')
         
-        self.assertEqual(newx.root.obj_repr(), 10)
-        x.flush()
+    #     self.assertEqual(newx.root.obj_repr(), 10)
+    #     x.flush()
 
 
 if __name__ == '__main__':
