@@ -3,6 +3,8 @@ import json
 import sys
 import json
 import random
+import hashlib
+import os
 
 import trees
 import ns
@@ -11,6 +13,8 @@ import ops
 class TestCurrent(unittest.TestCase):
     # the current test i'm really worried about.
     def test_zzz_nested_dict_access_with_rewrite(self):
+        # after writing a test like this i understand why quickcheck exists.
+        
         d = ns.Document(trees.Node.from_obj({'key':[1,2,3], 'word':1}))
 
         op_d = ops.ListInsertOperation(0, [trees.Node.from_obj(-1), trees.Node.from_obj(-2)])
@@ -30,6 +34,9 @@ class TestCurrent(unittest.TestCase):
         d = d.include_operation(['key'], op_after, ts=1)
         self.assertEqual(d.root.obj_repr(), {'key':[-1,-2,1,42,126, "hello world"], 'word':101})
 
+    def test_fs_storage_reload_from_disk(self):
+        pass
+                         
 if __name__ == '__main__':
     unittest.main()
 

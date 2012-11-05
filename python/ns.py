@@ -2,6 +2,9 @@ import trees
 import ops
 import time
 import json
+import os
+import shutil
+import hashlib
 
 def safe_bound(x):
     if x > 0:
@@ -19,7 +22,7 @@ class Namespace(object):
         self.name = name
         self.docs = {}
         self.constructor = Document
-        self.dirty_docs = []
+        self.dirty_docs = {}
         self.dirty_ops = []
 
     def execute(self, key, path, operation):
@@ -29,14 +32,14 @@ class Namespace(object):
             doc = self.constructor()
         newd = doc.include_operation(path, operation)
 
-        self.dirty_docs.append([key, newd])
+        self.dirty_docs[key] = (newd, operation._id)
         self.dirty_ops.append([key, path, operation])
 
         self.docs[key] = newd
         return newd
 
     def flush(self):
-        self.dirty_docs = []
+        self.dirty_docs = {}
         self.dirty_ops = []
 
     def get(self, key):
@@ -45,16 +48,48 @@ class Namespace(object):
     def get_value(self, key):
         return self.docs[key].root.obj_repr()
 
-#ignore this for now
-# class NamespaceFS(Namespace):
-#     ROOT = 'data/'
-#     def flush(self):
-#         for key, rev in self.dirty_docs:
-#             path_to_key = self.ROOT + 'asdf'
-#         for key, path, op in self.dirty_ops:
-#             pass
-#         self.dirty_docs = []
-#         self.dirty_ops = []
+# ignore this for now
+class NamespaceFS(Namespace):
+    ROOT = 'data/'
+    DIR_WITH_CHANGES = 'changes'
+    DIR_WITH_CURRENT_STATE = 'current'
+
+    def full_load(self):
+        self.docs = {}
+        self.dirty_docs = {}
+        self.dirty_ops = []
+
+    def incremental_load(self):
+        pass
+    
+    def init(self):
+        for i in (self.ROOT, 
+                  '%s/%s' % (self.ROOT, self.DIR_WITH_CHANGES),
+                  '%s/%s' % (self.ROOT, self.DIR_WITH_CURRENT_STATE)):
+            if not os.path.isdir(i):
+                os.mkdir(i)
+                
+    def purge_disk(self):
+        if os.path.isdir(self.ROOT):
+            shutil.rmtree(self.ROOT)
+        
+    def flush(self):
+        for key in self.dirty_docs:
+            value, prev_op = self.dirty_docs[key]
+            hkey = hashlib.md5(key).hexdigest()
+            path = '%s/%s/%s_%s' % (self.ROOT, self.DIR_WITH_CURRENT_STATE, hkey, prev_op)
+            f = open(path, 'w')
+            f.write(json.dumps(value.root.obj_repr()))
+            f.close()
+
+        for key, path, op in self.dirty_ops:
+            file_path = '%s/%s/%s' % (self.ROOT, self.DIR_WITH_CHANGES, op._id)
+            f = open(file_path, 'w')
+            f.write(json.dumps([key, path, op.pack()]))
+            f.close()
+
+        self.dirty_docs = {}
+        self.dirty_ops = []
 
 class Document(object):
     # The object that we are storing data in,
