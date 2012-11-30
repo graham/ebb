@@ -13,6 +13,7 @@ if __name__ == '__main__':
     from test_ops import *
     from test_trees import *
     from test_fs_storage import *
+    from test_helper import *
     from util import *
 
     unittest.main()
