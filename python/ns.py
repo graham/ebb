@@ -59,6 +59,25 @@ class NamespaceFS(Namespace):
         self.dirty_docs = {}
         self.dirty_ops = []
 
+        path_to_keys = '%s/%s' % (self.ROOT, self.DIR_WITH_CURRENT_STATE)
+        all_keys = os.listdir(path_to_keys)
+        
+        d = {}
+        for i in all_keys:
+            hkey, rev = i.split('_')
+            if hkey in d:
+                d[hkey].append(rev)
+            else:
+                d[hkey] = [rev]
+
+        for hkey in d:
+            if len(d[hkey]) == 1:
+                key, value = json.loads(open('%s/%s_%s' % (path_to_keys, hkey, d[hkey][0])).read())
+                self.docs[key] = Document(trees.Node.from_obj(value))
+            else:
+                for rev in d[hkey]:
+                    print hkey, rev
+
     def incremental_load(self):
         pass
     
@@ -72,6 +91,13 @@ class NamespaceFS(Namespace):
     def purge_disk(self):
         if os.path.isdir(self.ROOT):
             shutil.rmtree(self.ROOT)
+
+    def fresh(self):
+        self.purge_disk()
+        self.init()
+
+    def trace_revisions(self, id, head):
+        pass
         
     def flush(self):
         for key in self.dirty_docs:
@@ -79,7 +105,7 @@ class NamespaceFS(Namespace):
             hkey = hashlib.md5(key).hexdigest()
             path = '%s/%s/%s_%s' % (self.ROOT, self.DIR_WITH_CURRENT_STATE, hkey, prev_op)
             f = open(path, 'w')
-            f.write(json.dumps(value.root.obj_repr()))
+            f.write(json.dumps([key, value.root.obj_repr()]))
             f.close()
 
         for key, path, op in self.dirty_ops:
@@ -109,9 +135,15 @@ class Document(object):
         return '\n'.join(s)
     
     def __str__(self):
-        return str(self.root.obj_repr())
+        return "<Document value=%r>" % str(self.root.obj_repr())
     def __repr__(self):
         return self.__str__()
+
+    def get(self, path):
+        return self.root.get_path(path)
+
+    def get_value(self, path):
+        return self.get(path).obj_repr()
 
     def exclude_operation(self, operation):
         # ensure that this operation actually happened.
@@ -154,13 +186,21 @@ class Document(object):
         assert operation._id not in [i[2]._id for i in self.history_buffer]
 
         if self.root == None:
-            self.root = trees.Node(type=operation.for_type)
+            if operation.for_type == '*':
+                self.root = trees.Node.from_obj(operation.value)
+            else:
+                self.root = trees.Node(type=operation.for_type)
 
         if ts == None:
             ts = time.time()
 
             target_root = self.root.clone()
-            new, reverse = operation.apply(target_root.get_path(path))
+
+            if target_root.test_path(path):
+                new, reverse = operation.apply(target_root.get_path(path))
+            else:
+                new, reverse = operation.apply(trees.Node.from_obj(trees.Node.default_for_type(trees.TYPES[operation.for_type])))
+
             target_root.set_path(path, new)
             new = target_root
                 
@@ -186,6 +226,11 @@ class Document(object):
             for ots, opath, forward, backward in to_unroll:
                 new, rev = backward.apply(x.root.get_path(opath))
                 x.root.set_path(opath, new)
+
+            # if target_root.test_path(path):
+            #     new, reverse = operation.apply(target_root.get_path(path))
+            # else:
+            #     new, reverse = operation.apply(trees.Node.from_obj(trees.Node.default_for_type(trees.TYPES[operation.for_type])))
 
             new, rev = operation.apply(x.root.get_path(path))
             x.root.set_path(path, new)
