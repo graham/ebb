@@ -116,6 +116,7 @@ class NamespaceHelper(Namespace):
         return self.getpv(key)[index]
     ### END LIST FUNCS
 
-    ### START STRING FUNCS
+    ### START STRING FUNCTIONS
+    ### END STRING FUNCTIONS
 
 x = NamespaceHelper('test')
