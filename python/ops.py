@@ -10,6 +10,8 @@ def safe_bound(x):
 
 ### Base Operation.
 class Operation(object):
+    for_type = '*'
+
     def __init__(self):
         self._id = str(uuid.uuid4())
         #for the new way of thinking
@@ -107,6 +109,22 @@ class Operation(object):
             pass
     ### End Pavelian History Maintenence.
 
+### Basic Set Operation
+class SetOperation(Operation):
+    for_type = '*'
+
+    def __init__(self, value):
+        Operation.__init__(self)
+        self.value = value
+
+    def pack(self):
+        return ['SetOperation', self._id, self.value]
+
+    def apply(self, node):
+        new = trees.Node.from_obj(self.value)
+        reverse = SetOperation(node.obj_repr())
+        return new, reverse
+    
 ### Number Operations.
 class NumberIncrementOperation(Operation):
     for_type = 'number'
