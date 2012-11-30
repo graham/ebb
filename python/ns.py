@@ -5,6 +5,8 @@ import json
 import os
 import shutil
 import hashlib
+import sqlite3
+from document import Document
 
 def safe_bound(x):
     if x > 0:
@@ -39,8 +41,20 @@ class Namespace(object):
         return newd
 
     def flush(self):
+        for key in self.dirty_docs:
+            value, prev_op = self.dirty_docs[key]
+            self.save_doc(key, prev_op, value)
+
+        for key, path, op in self.dirty_ops:
+            self.save_op(key, path, op)
+
         self.dirty_docs = {}
         self.dirty_ops = []
+
+    def save_doc(self, key, prev_op, value):
+        raise Exception("Someone didn't implement save_doc")
+    def save_op(self, key, path, op):
+        raise Exception("Someone didn't implement save_op")
 
     def get(self, key):
         return self.docs[key]
@@ -50,16 +64,21 @@ class Namespace(object):
 
 # ignore this for now
 class NamespaceFS(Namespace):
-    ROOT = 'data/'
-    DIR_WITH_CHANGES = 'changes'
-    DIR_WITH_CURRENT_STATE = 'current'
+    ## These can be in a synced environment.
+    SYNC_ROOT = '/tmp/data/'
+    DIR_WITH_CHANGES = 'ops'
+    DIR_WITH_CURRENT_STATE = 'state'
+
+    ## These cannot because they are specific to the state of this client.
+    META_ROOT = '/tmp/local/'
+    DIR_WITH_META_STATE = 'meta'
 
     def full_load(self):
         self.docs = {}
         self.dirty_docs = {}
         self.dirty_ops = []
 
-        path_to_keys = '%s/%s' % (self.ROOT, self.DIR_WITH_CURRENT_STATE)
+        path_to_keys = '%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CURRENT_STATE)
         all_keys = os.listdir(path_to_keys)
         
         d = {}
@@ -78,185 +97,114 @@ class NamespaceFS(Namespace):
                 for rev in d[hkey]:
                     print hkey, rev
 
-    def incremental_load(self):
-        pass
-    
     def init(self):
-        for i in (self.ROOT, 
-                  '%s/%s' % (self.ROOT, self.DIR_WITH_CHANGES),
-                  '%s/%s' % (self.ROOT, self.DIR_WITH_CURRENT_STATE)):
+        for i in (self.SYNC_ROOT, 
+                  '%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CHANGES),
+                  '%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CURRENT_STATE)):
             if not os.path.isdir(i):
                 os.mkdir(i)
                 
-    def purge_disk(self):
-        if os.path.isdir(self.ROOT):
-            shutil.rmtree(self.ROOT)
+    def purge(self):
+        if os.path.isdir(self.SYNC_ROOT):
+            shutil.rmtree(self.SYNC_ROOT)
 
-    def fresh(self):
-        self.purge_disk()
-        self.init()
-
-    def trace_revisions(self, id, head):
-        pass
+    def save_doc(self, key, prev_op, value):
+        hkey = hashlib.md5(key).hexdigest()
+        path = '%s/%s/%s_%s' % (self.SYNC_ROOT, self.DIR_WITH_CURRENT_STATE, hkey, prev_op)
+        f = open(path, 'w')
+        f.write(json.dumps([key, value.root.obj_repr()]))
+        f.close()
         
-    def flush(self):
-        for key in self.dirty_docs:
-            value, prev_op = self.dirty_docs[key]
-            hkey = hashlib.md5(key).hexdigest()
-            path = '%s/%s/%s_%s' % (self.ROOT, self.DIR_WITH_CURRENT_STATE, hkey, prev_op)
-            f = open(path, 'w')
-            f.write(json.dumps([key, value.root.obj_repr()]))
-            f.close()
+    def save_op(self, key, path, op):
+        file_path = '%s/%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CHANGES, op._id)
+        f = open(file_path, 'w')
+        f.write(json.dumps([key, path, op.pack()]))
+        f.close()
 
-        for key, path, op in self.dirty_ops:
-            file_path = '%s/%s/%s' % (self.ROOT, self.DIR_WITH_CHANGES, op._id)
-            f = open(file_path, 'w')
-            f.write(json.dumps([key, path, op.pack()]))
-            f.close()
+    def load_doc(self, key):
+        if key in self.docs:
+            return self.freshen_doc(key)
 
-        self.dirty_docs = {}
-        self.dirty_ops = []
-
-class Document(object):
-    # The object that we are storing data in,
-    # for each key there is n documents, however,
-    # each of these documents should have a shared parent
-    # the only time they don't would be if
-    #  a. something is seriously wrong.
-    #  b. the shared parent has been garbage collected.
-    def __init__(self, root=None):
-        self.root = root
-        self.history_buffer = []
-
-    def pack(self):
-        s = []
-        for i in self.history_buffer:
-            s.append(json.dumps([i[0], i[1], i[2].pack()]))
-        return '\n'.join(s)
     
-    def __str__(self):
-        return "<Document value=%r>" % str(self.root.obj_repr())
-    def __repr__(self):
-        return self.__str__()
+class NamespaceSQLite(NamespaceFS):
+    SYNC_DB = '/tmp/data.db'
+    TABLE_CHANGES_NAME = 'ops'
+    TABLE_CHANGES_DEF = '''
+create table %s ( 
+ uid int primary key, 
+ key varchar(1024),
+ op_id varchar(128),
+ path text,
+ value text
+)''' % TABLE_CHANGES_NAME
 
-    def get(self, path):
-        return self.root.get_path(path)
+    TABLE_CURRENT_NAME = 'revisions'
+    TABLE_CURRENT_DEF = '''
+create table %s (
+ uid int primary key,
+ key varchar(1024),
+ prev_op varchar(128),
+ value text
+)''' % TABLE_CURRENT_NAME 
 
-    def get_value(self, path):
-        return self.get(path).obj_repr()
+    META_DB = '/tmp/meta.db'
+    TABLE_STATE_NAME = 'current_state'
+    TABLE_STATE_DEF = '''
+create table %s (
+ uid int primary key,
+ key varchar(1024),
+ current varchar(1024)
+)''' % TABLE_STATE_NAME
 
-    def exclude_operation(self, operation):
-        # ensure that this operation actually happened.
-        assert operation._id in [i[2]._id for i in self.history_buffer]
-
-        inverse_of_op = None
-
-        to_unroll = []
-        for hb in reversed(self.history_buffer):
-            to_unroll.append(hb)
-            if hb[2]._id == operation._id:
-                inverse_of_op = hb
-                break;
-
-        x = self.__class__(self.root.clone())
-
-        for hb in self.history_buffer:
-            if hb[2]._id != operation._id:
-                x.history_buffer.append(hb)
-            else:
-                break
-
-        # replay the 
-
-        for ts, path, forward, backward in to_unroll:
-            new, rev = backward.apply(x.root.get_path(path))
-            x.root.set_path(path, new)
-
-        mutated_unroll = self.mutate_based_on(x.root.clone(), inverse_of_op[1], to_unroll[:-1], inverse_of_op[3])
-
-        for ts, path, forward, backward in mutated_unroll:
-            new, rev = forward.apply(x.root.get_path(path))
-            x.root.set_path(path, new)
-            x.history_buffer.append([ts, path, forward, rev])
-
-        return x
-
-    def include_operation(self, path, operation, ts=None):
-        #make sure that the operation has not been included yet.
-        assert operation._id not in [i[2]._id for i in self.history_buffer]
-
-        if self.root == None:
-            if operation.for_type == '*':
-                self.root = trees.Node.from_obj(operation.value)
-            else:
-                self.root = trees.Node(type=operation.for_type)
-
-        if ts == None:
-            ts = time.time()
-
-            target_root = self.root.clone()
-
-            if target_root.test_path(path):
-                new, reverse = operation.apply(target_root.get_path(path))
-            else:
-                new, reverse = operation.apply(trees.Node.from_obj(trees.Node.default_for_type(trees.TYPES[operation.for_type])))
-
-            target_root.set_path(path, new)
-            new = target_root
-                
-            x = self.__class__(new.clone())
-            for i in self.history_buffer:
-                x.history_buffer.append(i)
-            x.history_buffer.append([ts, path, operation, reverse])
-            return x
+    def table_exists(self, cursor, title):
+        q = "SELECT name FROM sqlite_master WHERE type='table' AND name='%s';" % title
+        cursor.execute(q)
+        result = q.fetchone()
+        if result == None:
+            return False
         else:
-            to_unroll = []
-            for hb in reversed(self.history_buffer):
-                if ts < hb[0]:
-                    to_unroll.append(hb)
+            return True
 
-            x = self.__class__(self.root.clone())
+    def init(self):
+        self.sync_db = sqlite3.connect(self.SYNC_DB)
+        self.meta_db = sqlite3.connect(self.META_DB)
 
-            for hb in self.history_buffer:
-                if ts >= hb[0]:
-                    x.history_buffer.append(hb)
-                else:
-                    break
-
-            for ots, opath, forward, backward in to_unroll:
-                new, rev = backward.apply(x.root.get_path(opath))
-                x.root.set_path(opath, new)
-
-            # if target_root.test_path(path):
-            #     new, reverse = operation.apply(target_root.get_path(path))
-            # else:
-            #     new, reverse = operation.apply(trees.Node.from_obj(trees.Node.default_for_type(trees.TYPES[operation.for_type])))
-
-            new, rev = operation.apply(x.root.get_path(path))
-            x.root.set_path(path, new)
-            x.history_buffer.append([ts, path, operation, rev])
-
-            mutated_unroll = self.mutate_based_on(x.root.clone(), path, to_unroll, operation)
-
-            for ots, opath, forward, backward in mutated_unroll:
-                new, rev = forward.apply(x.root.get_path(opath))
-                x.root.set_path(opath, new)
-                x.history_buffer.append([ots, opath, forward, rev])
-
-            return x
-
-    def mutate_based_on(self, root, tpath, oplist, reference_op):
-        target_node = root.get_path(tpath)
-
-        if reference_op == None or target_node.type in trees.APPLY_TYPES:
-            return reversed(oplist)
-        
-        if target_node.type in (trees.TYPES['string'], trees.TYPES['list']):
-            return reversed(reference_op.handle_mutate(root, tpath, oplist))
-        elif target_node.type in (trees.TYPES['dict'], ):
-            return reversed(oplist)
-        else:
-            ## this is a problem.
-            return reversed(oplist)
+        csdb = self.sync_db.cursor()
+        if not self.table_exists(csdb, TABLE_CHANGES_DEF):
+            csdb.execute(TABLE_CHANGES_DEF)
+        if not self.table_exists(csdb, TABLE_CURRENT_DEF):
+            csdb.execute(TABLE_CURRENT_DEF)
+        self.sync_db.commit()
 
 
+        cmdb = self.meta_db.cursor()
+        if not self.table_exists(cmdb, TABLE_STATE_DEF):
+            cmdb.execute(TABLE_STATE_DEF)
+        self.meta_db.commit()
+
+    def purge(self):
+        csdb = self.sync_db.cursor()
+        if self.table_exists(csdb, TABLE_CHANGES_DEF):
+            csdb.execute('delete from %s' % TABLE_CHANGES_NAME)
+        if self.table_exists(csdb, TABLE_CURRENT_DEF):
+            csdb.execute('delete from %s' % TABLE_CURRENT_NAME)
+        self.sync_db.commit()
+
+
+        cmdb = self.meta_db.cursor()
+        if self.table_exists(cmdb, TABLE_STATE_DEF):
+            cmdb.execute('delete from %s' % TABLE_STATE_NAME)
+        self.meta_db.commit()
+
+    def save_doc(self, key, prev_op, value):
+        hkey = hashlib.md5(key).hexdigest()
+        cursor = self.sync_db.cursor()
+        cursor.execute('insert into %s(key, prev_op, value) values(?, ?, ?);' % TABLE_CURRENT_NAME, [hkey, prev_op, json.dumps(value)])
+        self.sync_db.commit()
+
+    def save_op(self, key, path, op):
+        cursor = self.sync_db.cursor()
+        cursor.execute('insert into %s(key, op_id, path, value) values(?, ?, ?, ?);' % TABLE_CHANGES_NAME, [key, op._id, path, op.pack()])
+        self.sync_db.commit()
+
+    
