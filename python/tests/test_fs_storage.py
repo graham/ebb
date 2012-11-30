@@ -49,9 +49,32 @@ class TestFSStorage(unittest.TestCase):
         value = 10
         path = []
 
-        self.assertEqual(json.loads(open(path_to_state).read()), value)
+        self.assertEqual(json.loads(open(path_to_state).read()), [key, value])
         self.assertEqual(json.loads(open(path_to_commit).read()),
                          [key, path, [u'NumberIncrementOperation', unicode(op._id), value]])
+
+    def test_fs_storage_reload_from_disk(self):
+        x = ns.NamespaceFS('test_namespace')
+        x.fresh()
+
+        keys = ['key_%i' % i for i in range(0, 10)]
+        for i in keys:
+            for j in range(0, 5):
+                op = ops.NumberIncrementOperation(random.randint(100, 1000))
+                x.execute(i, [], op)
+        
+        x.flush()
+
+        #---------
+
+        y = ns.NamespaceFS('test_namespace')
+        y.full_load()
+
+        for i in keys:
+            left = x.get_value(i)
+            right = y.get_value(i)
+            self.assertEqual( left, right )
+
 
 if __name__ == '__main__':
     unittest.main()
