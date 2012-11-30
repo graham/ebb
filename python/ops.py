@@ -323,9 +323,30 @@ class DictDropKeyOperation(Operation):
 
 # sets
 class SetAddOperation(Operation):
-    pass
+    for_type = 'set'
+
+    def __init__(self, value):
+        Operation.__init__(self)
+        self.value = value
+
+    def pack(self):
+        return ["SetAddOperation", self._id, self.value]
+
+    def apply(self, node):
+        pass
+
 class SetRemoveOperation(Operation):
-    pass
+    for_type = 'set'
+
+    def __init__(self, value):
+        Operation.__init__(self)
+        self.value = value
+
+    def pack(self):
+        return ["SetRemoveOperation", self._id, self.value]
+
+    def apply(self, node):
+        pass
 
 # zsets
 class ScoredSetAddOperation(Operation):
