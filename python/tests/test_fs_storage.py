@@ -24,7 +24,7 @@ class TestFSStorage(unittest.TestCase):
 
     def tests_storage_basic(self):
         x = ns.NamespaceFS('test_namespace')
-        x.purge_disk()
+        x.purge()
         x.init()
         op = ops.NumberIncrementOperation(10)
 
@@ -40,8 +40,8 @@ class TestFSStorage(unittest.TestCase):
         self.assertEqual(x.dirty_docs, {})
         self.assertEqual(x.dirty_ops, [])
 
-        path_to_state = '%s/%s/%s_%s' % (x.ROOT, x.DIR_WITH_CURRENT_STATE, hkey, op._id)
-        path_to_commit = '%s/%s/%s' % (x.ROOT, x.DIR_WITH_CHANGES, op._id)
+        path_to_state = '%s/%s/%s_%s' % (x.SYNC_ROOT, x.DIR_WITH_CURRENT_STATE, hkey, op._id)
+        path_to_commit = '%s/%s/%s' % (x.SYNC_ROOT, x.DIR_WITH_CHANGES, op._id)
 
         self.assertTrue(os.path.exists(path_to_state))
         self.assertTrue(os.path.exists(path_to_commit))
@@ -55,7 +55,8 @@ class TestFSStorage(unittest.TestCase):
 
     def test_fs_storage_reload_from_disk(self):
         x = ns.NamespaceFS('test_namespace')
-        x.fresh()
+        x.purge()
+        x.init()
 
         keys = ['key_%i' % i for i in range(0, 10)]
         for i in keys:
