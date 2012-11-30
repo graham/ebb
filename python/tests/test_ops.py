@@ -120,6 +120,14 @@ class TestOperations(unittest.TestCase):
         
         step_back, revert_step_back = revert_second.apply(second)
         self.assertEqual(second.obj_repr(), [1,2,{'one':'hello'}])
+
+    def test_pure_set(self):
+        init = trees.Node.from_obj([1,2,3])
+        op1 = ops.SetOperation([4,5,6])
+
+        first, reverse_first = op1.apply(init)
+
+        self.assertEqual(first.obj_repr(), [4,5,6])
         
 if __name__ == '__main__':
     unittest.main()
