@@ -136,13 +136,31 @@ class Node(object):
         else:
             raise Exception("%i is not defined in the TYPES table" % self.type)
 
+
+    @classmethod
+    def default_for_type(self, t):
+        if t == TYPES['number']:
+            return 0
+        elif t == TYPES['string']:
+            return ''
+        elif t == TYPES['boolean']:
+            return False
+        elif t == TYPES['list']:
+            return []
+        elif t == TYPES['dict']:
+            return dict()
+        elif t == TYPES['null']:
+            return None
+        else:
+            raise Exception("%i is not defined in the TYPES table" % t)
+
     def set_value(self, obj):
         if type(obj) in (int, long, float, bool, str, unicode):
             self.value = json.dumps(obj)
         elif type(obj) in (Node,):
-            if obj.value:
+            if obj.value != None:
                 self.value = obj.value
-            elif obj.children:
+            if obj.children != None:
                 self.children = obj.children
             else:
                 raise Exception("Bad set value")
@@ -150,6 +168,33 @@ class Node(object):
             self.children = Node.from_obj(obj)
 
     ## Nice things to have for testing.
+
+    def test_path(self, key):
+        if not key:
+            return True
+        if len(key) == 1:
+            return self._test(key[0])
+        else:
+            obj = self._test(key[0])
+            if type(obj) == bool:
+                return obj
+            return obj.test_path(key[1:])
+
+    def _test(self, key):
+        if self.type == TYPES['dict']:
+            for i in self.children:
+                if key == i.attr['key']:
+                    return True
+            return False
+        elif type(key) in (int, long):
+            if self.type == TYPES['string']:
+                return True
+            elif self.type == TYPES['list']:
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def get_path(self, key):
         if not key:
@@ -193,7 +238,10 @@ class Node(object):
                     return
 
             #looks like we didn't find the key
-            n = Node(type=obj_to_json_type(value))
+            if type(value) != Node:
+                n = Node(type=obj_to_json_type(value))
+            else:
+                n = value.clone()
             n.attr['key'] = key
             n.set_value(value)
             self.children.append(n)
