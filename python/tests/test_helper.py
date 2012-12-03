@@ -37,6 +37,17 @@ class TestHelper(unittest.TestCase):
         n.incr('test/two/point', 1)
         self.assertEqual(n.getpv('test/two/point'), 2)
 
+    def test_getset(self):
+        x = NamespaceHelper("test")
+        x.set_path("key", [1,2,3])
+        x.set_path("name", "graham")
+        
+        result1 = x.getset("key", [4,5,6])
+        result2 = x.getsetv("name", "abbott")
+
+        self.assertEqual(result1.obj_repr(), [1,2,3])
+        self.assertEqual(result2, "graham")
+
     def test_basic_incr(self):
         x = NamespaceHelper("test_namespace")
         x.incr("test", 1)
@@ -126,6 +137,29 @@ class TestHelper(unittest.TestCase):
         x = NamespaceHelper("test")
         x.set_path("list", [1,2,3,4])
         self.assertEqual(x.lindex('list', 1), 2)
+    
+    def test_sinsert(self):
+        x = NamespaceHelper("test")
+        init = '''Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live. - Martin Golding'''
+        mid = "Quote: " + init
+        final = "Quote: Almost " + init
+
+        x.set_path('key', init)
+        x.sinsert('key', 0, "Quote: ")
+
+        self.assertEqual(x.get_path_value('key'), mid)
+
+        x.sinsert('key', 7, 'Almost ')
+        self.assertEqual(x.get_path_value('key'), final)
+
+    def test_sdelete(self):
+        x = NamespaceHelper('test')
+        init = '''Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live. - Martin Golding'''
+        mid = '''code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live. - Martin Golding'''
+
+        x.set_path('key', init)
+        x.sdelete('key', 0, 7)
+        self.assertEqual(x.getpv('key'), mid)
 
 if __name__ == "__main__":
     unittest.main()

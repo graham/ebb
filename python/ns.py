@@ -55,6 +55,14 @@ class Namespace(object):
         raise Exception("Someone didn't implement save_doc")
     def save_op(self, key, path, op):
         raise Exception("Someone didn't implement save_op")
+    def load_doc(self, key):
+        raise Exception("Someone didn't implement load_doc")
+    def load_revision(self, key, revision):
+        raise Exception("Someone didn't implement load_revision")
+    def load_op(self, op_id):
+        raise Exception("Someone didn't implement load_op")
+    def list_keys(self):
+        return []
 
     def get(self, key):
         return self.docs[key]
@@ -91,11 +99,28 @@ class NamespaceFS(Namespace):
 
         for hkey in d:
             if len(d[hkey]) == 1:
-                key, value = json.loads(open('%s/%s_%s' % (path_to_keys, hkey, d[hkey][0])).read())
+                hkey, prev_op, key, value = self.load_revision(hkey, d[hkey][0])
                 self.docs[key] = Document(trees.Node.from_obj(value))
             else:
                 for rev in d[hkey]:
                     print hkey, rev
+
+    def load_revision(self, key, revision):
+        path_to_keys = '%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CURRENT_STATE)
+        return json.loads(open('%s/%s_%s' % (path_to_keys, key, revision)).read())
+
+    def list_keys(self):
+        all_keys = os.listdir(path_to_keys)
+        
+        d = {}
+        for i in all_keys:
+            hkey, rev = i.split('_')
+            if hkey in d:
+                d[hkey].append(rev)
+            else:
+                d[hkey] = [rev]
+
+        return d
 
     def init(self):
         for i in (self.SYNC_ROOT, 
@@ -112,20 +137,16 @@ class NamespaceFS(Namespace):
         hkey = hashlib.md5(key).hexdigest()
         path = '%s/%s/%s_%s' % (self.SYNC_ROOT, self.DIR_WITH_CURRENT_STATE, hkey, prev_op)
         f = open(path, 'w')
-        f.write(json.dumps([key, value.root.obj_repr()]))
+        f.write(json.dumps([hkey, prev_op, key, value.root.obj_repr()]))
         f.close()
         
     def save_op(self, key, path, op):
         file_path = '%s/%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CHANGES, op._id)
         f = open(file_path, 'w')
-        f.write(json.dumps([key, path, op.pack()]))
+        f.write(json.dumps([op._id, key, path, op.pack()]))
         f.close()
 
-    def load_doc(self, key):
-        if key in self.docs:
-            return self.freshen_doc(key)
 
-    
 class NamespaceSQLite(NamespaceFS):
     SYNC_DB = '/tmp/data.db'
     TABLE_CHANGES_NAME = 'ops'
