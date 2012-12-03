@@ -1,9 +1,0 @@
-# Ebb
-## The vision
-   The purpose of ebb is to create a object store that simply works, regardless of:
-
-   - Application
-   - Operating System
-   - Network connection
-
-   By creating a simple interface for applications 

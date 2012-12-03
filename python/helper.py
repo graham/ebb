@@ -130,12 +130,15 @@ class NamespaceHelper(Namespace):
         key, path = self._parse(fullkey)
         self.execute(key, path, op)
 
-    def sappend(self, key, index, s):
-        pass
-    def sprepend(self, key, index, s):
-        pass
+    def sappend(self, key, s):
+        current = self.get_path_value(key)
+        return self.sinsert(key, len(current), s)
+
+    def sprepend(self, key, s):
+        self.sinsert(key, 0, s)
+
     def slen(self, key):
-        pass
+        return len(self.get_path_value(key))
     ### END STRING FUNCTIONS
     
 x = NamespaceHelper('test')

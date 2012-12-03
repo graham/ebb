@@ -1,0 +1,6 @@
+# Ebb
+
+Things to do
+
+ - the rest of the string operations.
+ - recover revision history on load.

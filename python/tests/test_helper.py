@@ -161,5 +161,22 @@ class TestHelper(unittest.TestCase):
         x.sdelete('key', 0, 7)
         self.assertEqual(x.getpv('key'), mid)
 
+    def test_sappend(self):
+        x = NamespaceHelper('test')
+        x.set_path('key', 'hello world')
+        x.sappend('key', ', asdf')
+        self.assertEqual(x.getpv('key'), 'hello world, asdf')
+
+    def test_sprepend(self):
+        x = NamespaceHelper('test')
+        x.set_path('key', 'world')
+        x.sprepend('key', 'hello ')
+        self.assertEqual(x.getpv('key'), 'hello world')
+
+    def test_slen(self):
+        x = NamespaceHelper('test')
+        x.set_path('key', 'hello world')
+        self.assertEqual(x.slen('key'), len('hello world'))
+
 if __name__ == "__main__":
     unittest.main()
