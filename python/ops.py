@@ -21,6 +21,9 @@ class Operation(object):
         return "<Op: %s>" % self.pack()
 
     def clone(self):
+        # This is a all around bad method, but frankly, I want to ensure that
+        # if you get an object it can't change out from under you, so this is
+        # one way to get it done until I come up with a cleaner way.
         return unpack(self.pack())
 
     ###### Now it gets fun, this should eventually be split out into classes or 
@@ -124,6 +127,26 @@ class SetOperation(Operation):
         new = trees.Node.from_obj(self.value)
         reverse = SetOperation(node.obj_repr())
         return new, reverse
+
+class MovePathOperation(Operation):
+    for_type = '*'
+    
+    def __init__(self, source_path, target_path):
+        Operation.__init__(self)
+        self.source_path = source_path
+        self.target_path = target_path
+
+    def pack(self):
+        return ['MovePathOperation', self._id, self.source_path, self.target_path]
+
+    def apply(self, node):
+        new = node.clone()
+        value = new.get_path(self.source_path)
+        new.remove_path(self.source_path)
+        new.set_path(self.target_path, value)
+
+        reverse = MovePathOperation(self.target_path, self.source_path)
+        return new, reverse
     
 ### Number Operations.
 class NumberIncrementOperation(Operation):
@@ -137,7 +160,8 @@ class NumberIncrementOperation(Operation):
         return ['NumberIncrementOperation', self._id, self.amount]
 
     def apply(self, node):
-        new = node.proto(node.obj_repr() + self.amount)
+        new = node.clone()
+        new.set_value(node.obj_repr() + self.amount)
         reverse = NumberIncrementOperation(self.amount * (-1))
         return new, reverse
 
@@ -157,7 +181,8 @@ class StringInsertOperation(Operation):
     def apply(self, node):
         node_value = str(node.obj_repr())
         nv = node_value[:self.index] + self.text + node_value[self.index:]
-        new = node.proto(nv)
+        new = node.clone()
+        new.set_value(nv)
 
         reverse = StringDeleteOperation(self.index, len(self.text))
         return new, reverse
@@ -176,7 +201,9 @@ class StringDeleteOperation(Operation):
 
     def apply(self, node):
         node_value = str(node.obj_repr())
-        new = node.proto(node_value[:self.index] + node_value[self.index + self.length:])
+        new = node.clone()
+        new.set_value(node_value[:self.index] + node_value[self.index + self.length:])
+
         reverse = StringInsertOperation(self.index, node_value[self.index:self.index+self.length])
         return new, reverse
 
@@ -190,7 +217,8 @@ class StringSetOperation(Operation):
         return ['StringSetOperation', self._id, self.value]
 
     def apply(self, node):
-        new = node.proto(self.value)
+        new = node.clone()
+        new.set_value(self.value)
         reverse = StringSetOperation(node.obj_repr())
         return new, reverse
 
@@ -206,7 +234,9 @@ class BooleanSetOperation(Operation):
         return ["BooleanSetOperation", self._id, self.value]
 
     def apply(self, node):
-        new = node.proto(self.value)
+        new = node.clone()
+        new.set_value(self.value)
+
         reverse = BooleanSetOperation(not self.value)
         return new, reverse
 
@@ -223,7 +253,8 @@ class ListInsertOperation(Operation):
         return ["ListInsertOperation", self._id, self.index, self.value]
 
     def apply(self, node):
-        new = node.proto(children=node.children[:self.index] + self.value + node.children[self.index:])
+        new = node.clone()
+        new.children = new.children[:self.index] + self.value + new.children[self.index:]
         reverse = ListDeleteOperation(self.index, len(self.value))
         return new, reverse
 
@@ -238,8 +269,9 @@ class ListDeleteOperation(Operation):
         return ["ListDeleteOperation", self._id, self.index, self.length]
 
     def apply(self, node):
-        new = node.proto(children=node.children[:self.index] + node.children[self.index + self.length:])
-        reverse = ListInsertOperation(self.index, node.children[self.index:self.index+self.length])
+        new = node.clone()
+        reverse = ListInsertOperation(self.index, new.children[self.index:self.index+self.length])
+        new.children = new.children[:self.index] + new.children[self.index + self.length:]
         return new, reverse
 
 class ListSetIndexOperation(Operation):
@@ -254,7 +286,7 @@ class ListSetIndexOperation(Operation):
 
     def apply(self, node):
         old = node.children[self.index]
-        new_node = node.proto()
+        new_node = node.clone()
         new_node.children = []
 
         for index, item in enumerate(node.children):
@@ -280,7 +312,7 @@ class ListApplyIndexOperation(Operation):
         new, reverse = self.operation.apply(node.children[self.index])
         reverse_op = ListApplyIndexOperation(self.index, reverse)
 
-        new_node = node.proto()
+        new_node = node.clone()
         new_node.children = []
         
         for index, item in enumerate(node.children):
@@ -307,19 +339,11 @@ class DictKeyApplyOperation(Operation):
         child = node.get_path(self.key)
         new, reverse = self.operation.apply(child)
 
-        new_node = node.proto(node.value)
-        for index, item in enumerate(node.children):
-            new_node.children.append(item)
+        new_node = node.clone()
         new_node.set_path(self.key, new)
 
         reverse_op = DictKeyApplyOperation(self.key, reverse)
         return new_node, reverse_op
-
-## Work to do.
-class DictMoveKeyOperation(Operation):
-    pass
-class DictDropKeyOperation(Operation):
-    pass
 
 # sets
 class SetAddOperation(Operation):

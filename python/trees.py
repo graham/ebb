@@ -64,14 +64,6 @@ class Node(object):
     def clone(self):
         return Node.from_obj(self.obj_repr())
 
-    def proto(self, value=None, children=None):
-        p = Node(name=self.name, type_id=self.type, attr=self.attr)
-        if value != None:
-            p.set_value(value)
-        if children != None:
-            p.children = children
-        return p
-
     @classmethod
     def from_obj(cls, obj):
         t = obj_to_json_type(obj)
@@ -165,10 +157,9 @@ class Node(object):
             else:
                 raise Exception("Bad set value")
         else:
-            self.children = Node.from_obj(obj)
+            self.value = None
 
     ## Nice things to have for testing.
-
     def test_path(self, key):
         if not key:
             return True
@@ -286,4 +277,3 @@ class Node(object):
                 raise Exception('Invalid path: cannot index type %s' % self.type)
         else:
             raise Exception('invalid path')
-

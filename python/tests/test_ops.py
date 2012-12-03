@@ -117,9 +117,9 @@ class TestOperations(unittest.TestCase):
         op2 = ops.ListApplyIndexOperation(2, ops.DictKeyApplyOperation(['one'], ops.StringInsertOperation(0, 'sup, ')))
         second, revert_second = op2.apply(init)
         self.assertEqual(second.obj_repr(), [1,2,{'one':'sup, hello'}])
-        
+
         step_back, revert_step_back = revert_second.apply(second)
-        self.assertEqual(second.obj_repr(), [1,2,{'one':'hello'}])
+        self.assertEqual(step_back.obj_repr(), [1,2,{'one':'hello'}])
 
     def test_pure_set(self):
         init = trees.Node.from_obj([1,2,3])
@@ -128,6 +128,12 @@ class TestOperations(unittest.TestCase):
         first, reverse_first = op1.apply(init)
 
         self.assertEqual(first.obj_repr(), [4,5,6])
+
+    def test_move_path_simple(self):
+        init = trees.Node.from_obj({'test':123})
+        op1 = ops.MovePathOperation(['test'], ['new_path'])
         
+        first, revert_first = op1.apply(init)
+
 if __name__ == '__main__':
     unittest.main()
