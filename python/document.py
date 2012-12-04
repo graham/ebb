@@ -122,7 +122,6 @@ class Document(object):
             x.history_buffer.append([ts, path, operation, rev])
 
             mutated_unroll = self.mutate_based_on(x.root.clone(), path, to_unroll, operation)
-
             for ots, opath, forward, backward in mutated_unroll:
                 new, rev = forward.apply(x.root.get_path(opath))
                 x.root.set_path(opath, new)
@@ -143,5 +142,3 @@ class Document(object):
         else:
             ## this is a problem.
             return reversed(oplist)
-
-
