@@ -134,6 +134,19 @@ class TestOperations(unittest.TestCase):
         op1 = ops.MovePathOperation(['test'], ['new_path'])
         
         first, revert_first = op1.apply(init)
+        self.assertEqual(first.obj_repr(), {'new_path':123})
+
+    def test_move_path_complex(self):
+        d = {'key':[1,2,[4,5,{'ok':'value'}]]}
+        init = trees.Node.from_obj(d)
+        op1 = ops.MovePathOperation(['key', 2, 2, 'ok'], ['key', 2, 2, 'asdf'])
+        op2 = ops.MovePathOperation(['key'], ['asdf'])
+
+        first, revert_first = op1.apply(init)
+        self.assertEqual(first.obj_repr(), {'key':[1,2,[4,5,{'asdf':'value'}]]})
+
+        second, revert_second = op2.apply(first)
+        self.assertEqual(second.obj_repr(), {'asdf':[1,2,[4,5,{'asdf':'value'}]]})
 
 if __name__ == '__main__':
     unittest.main()
