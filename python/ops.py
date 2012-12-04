@@ -55,6 +55,8 @@ class Operation(object):
             return self.handle_mutate_with_path_string(row, tpath)
         elif self.for_type == 'list':
             return self.handle_mutate_with_path_list(row, tpath)
+        elif self.for_type == 'dict':
+            print self
         else:
             return row
         
@@ -128,26 +130,6 @@ class SetOperation(Operation):
         reverse = SetOperation(node.obj_repr())
         return new, reverse
 
-class MovePathOperation(Operation):
-    for_type = '*'
-    
-    def __init__(self, source_path, target_path):
-        Operation.__init__(self)
-        self.source_path = source_path
-        self.target_path = target_path
-
-    def pack(self):
-        return ['MovePathOperation', self._id, self.source_path, self.target_path]
-
-    def apply(self, node):
-        new = node.clone()
-        value = new.get_path(self.source_path)
-        new.remove_path(self.source_path)
-        new.set_path(self.target_path, value)
-
-        reverse = MovePathOperation(self.target_path, self.source_path)
-        return new, reverse
-    
 ### Number Operations.
 class NumberIncrementOperation(Operation):
     for_type = 'number'
@@ -345,6 +327,26 @@ class DictKeyApplyOperation(Operation):
         reverse_op = DictKeyApplyOperation(self.key, reverse)
         return new_node, reverse_op
 
+class MovePathOperation(Operation):
+    for_type = 'dict'
+    
+    def __init__(self, source_path, target_path):
+        Operation.__init__(self)
+        self.source_path = source_path
+        self.target_path = target_path
+
+    def pack(self):
+        return ['MovePathOperation', self._id, self.source_path, self.target_path]
+
+    def apply(self, node):
+        new = node.clone()
+        value = new.get_path(self.source_path)
+        new.remove_path(self.source_path)
+        new.set_path(self.target_path, value)
+
+        reverse = MovePathOperation(self.target_path, self.source_path)
+        return new, reverse
+    
 # sets
 class SetAddOperation(Operation):
     for_type = 'set'
