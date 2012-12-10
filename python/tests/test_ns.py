@@ -83,8 +83,6 @@ class TestNamespace(unittest.TestCase):
         newd = d.include_operation([], op4, ts=0)
         self.assertEqual(newd.root.obj_repr(), 50)
 
-
-
 if __name__ == '__main__':
     unittest.main()
 

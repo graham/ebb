@@ -1,6 +1,14 @@
-# Ebb
+# Ebb Todo
 
-Things to do
-
- - the rest of the string operations.
  - recover revision history on load.
+
+### Major issues
+
+> Dealing with large revision trees and understanding inheritance.
+
+This is one of those topics that is probably more suited for a math major. However, i'll give it a shot.
+
+One major issue with the growth of the revision history is that Ebb needs to be able to determine if a modification has been applied to a revision tree quickly and easily. One option is to have a list of previous IDs, however, this gets large quickly and seralizing and unseralizing this seems like it'd get pretty bulky.
+
+A possible solution, although one I haven't really thought through yet would be to use prime numbers as a way to keep track of which revisions are apart of your current history. By having the "current revision" simply be a product of prime numbers you can assure that a revision is included by determining if the id (a prime) is a factor of the final number. 
+
