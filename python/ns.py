@@ -8,6 +8,7 @@ import hashlib
 import sqlite3
 from document import Document
 
+
 def safe_bound(x):
     if x > 0:
         return x
@@ -53,14 +54,19 @@ class Namespace(object):
 
     def save_doc(self, key, prev_op, value):
         raise Exception("Someone didn't implement save_doc")
+
     def save_op(self, key, path, op):
         raise Exception("Someone didn't implement save_op")
+
     def load_doc(self, key):
         raise Exception("Someone didn't implement load_doc")
+
     def load_revision(self, key, revision):
         raise Exception("Someone didn't implement load_revision")
+
     def load_op(self, op_id):
         raise Exception("Someone didn't implement load_op")
+
     def list_keys(self):
         return []
 
@@ -69,6 +75,7 @@ class Namespace(object):
 
     def get_value(self, key):
         return self.docs[key].root.obj_repr()
+
 
 # ignore this for now
 class NamespaceFS(Namespace):
@@ -88,7 +95,7 @@ class NamespaceFS(Namespace):
 
         path_to_keys = '%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CURRENT_STATE)
         all_keys = os.listdir(path_to_keys)
-        
+
         d = {}
         for i in all_keys:
             hkey, rev = i.split('_')
@@ -111,7 +118,7 @@ class NamespaceFS(Namespace):
 
     def list_keys(self):
         all_keys = os.listdir(path_to_keys)
-        
+
         d = {}
         for i in all_keys:
             hkey, rev = i.split('_')
@@ -123,12 +130,12 @@ class NamespaceFS(Namespace):
         return d
 
     def init(self):
-        for i in (self.SYNC_ROOT, 
+        for i in (self.SYNC_ROOT,
                   '%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CHANGES),
                   '%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CURRENT_STATE)):
             if not os.path.isdir(i):
                 os.mkdir(i)
-                
+
     def purge(self):
         if os.path.isdir(self.SYNC_ROOT):
             shutil.rmtree(self.SYNC_ROOT)
@@ -139,7 +146,7 @@ class NamespaceFS(Namespace):
         f = open(path, 'w')
         f.write(json.dumps([hkey, prev_op, key, value.root.obj_repr()]))
         f.close()
-        
+
     def save_op(self, key, path, op):
         file_path = '%s/%s/%s' % (self.SYNC_ROOT, self.DIR_WITH_CHANGES, op._id)
         f = open(file_path, 'w')
@@ -151,8 +158,8 @@ class NamespaceSQLite(NamespaceFS):
     SYNC_DB = '/tmp/data.db'
     TABLE_CHANGES_NAME = 'ops'
     TABLE_CHANGES_DEF = '''
-create table %s ( 
- uid int primary key, 
+create table %s (
+ uid int primary key,
  key varchar(1024),
  op_id varchar(128),
  path text,
@@ -166,7 +173,7 @@ create table %s (
  key varchar(1024),
  prev_op varchar(128),
  value text
-)''' % TABLE_CURRENT_NAME 
+)''' % TABLE_CURRENT_NAME
 
     META_DB = '/tmp/meta.db'
     TABLE_STATE_NAME = 'current_state'
@@ -181,7 +188,7 @@ create table %s (
         q = "SELECT name FROM sqlite_master WHERE type='table' AND name='%s';" % title
         cursor.execute(q)
         result = q.fetchone()
-        if result == None:
+        if result is None:
             return False
         else:
             return True
@@ -197,7 +204,6 @@ create table %s (
             csdb.execute(TABLE_CURRENT_DEF)
         self.sync_db.commit()
 
-
         cmdb = self.meta_db.cursor()
         if not self.table_exists(cmdb, TABLE_STATE_DEF):
             cmdb.execute(TABLE_STATE_DEF)
@@ -211,7 +217,6 @@ create table %s (
             csdb.execute('delete from %s' % TABLE_CURRENT_NAME)
         self.sync_db.commit()
 
-
         cmdb = self.meta_db.cursor()
         if self.table_exists(cmdb, TABLE_STATE_DEF):
             cmdb.execute('delete from %s' % TABLE_STATE_NAME)
@@ -220,12 +225,14 @@ create table %s (
     def save_doc(self, key, prev_op, value):
         hkey = hashlib.md5(key).hexdigest()
         cursor = self.sync_db.cursor()
-        cursor.execute('insert into %s(key, prev_op, value) values(?, ?, ?);' % TABLE_CURRENT_NAME, [hkey, prev_op, json.dumps(value)])
+        cursor.execute('insert into %s(key, prev_op, value) ' +
+                       'values(?, ?, ?);' %
+                       TABLE_CURRENT_NAME, [hkey, prev_op, json.dumps(value)])
         self.sync_db.commit()
 
     def save_op(self, key, path, op):
         cursor = self.sync_db.cursor()
-        cursor.execute('insert into %s(key, op_id, path, value) values(?, ?, ?, ?);' % TABLE_CHANGES_NAME, [key, op._id, path, op.pack()])
+        cursor.execute('insert into %s(key, op_id, path, value) ' +
+                       'values(?, ?, ?, ?);' %
+                       TABLE_CHANGES_NAME, [key, op._id, path, op.pack()])
         self.sync_db.commit()
-
-    

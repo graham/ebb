@@ -3,12 +3,12 @@ import json
 DEBUG = 1
 
 TYPES = {
-    'number':0,
-    'string':1,
-    'boolean':2,
-    'list':3,
-    'dict':4,
-    'null':5
+    'number': 0,
+    'string': 1,
+    'boolean': 2,
+    'list': 3,
+    'dict': 4,
+    'null': 5
 }
 
 APPLY_TYPES = [
@@ -18,7 +18,8 @@ APPLY_TYPES = [
 ]
 
 #I've thought quite a bit about having more data types, things like
-#sets, sorted_sets, packed_sets, 
+#sets, sorted_sets, packed_sets
+
 
 def obj_to_json_type(k):
     if type(k) in (int, long, float, bool):
@@ -31,17 +32,19 @@ def obj_to_json_type(k):
         return 'list'
     elif type(k) in (dict, ):
         return 'dict'
-    elif k == None:
+    elif k is None:
         return 'null'
     elif type(k) in (Node,):
         return 'node'
     else:
         raise Exception('unknown type %r' % str(type(k)))
 
+
 def type_for_enum(k):
     for i in TYPES:
         if TYPES[i] == k:
             return i
+
 
 class Node(object):
     def __init__(self, **kwargs):
@@ -101,22 +104,24 @@ class Node(object):
     def __repr__(self):
         if DEBUG:
             return "<Node t:%s attr:%r value:%r children:%r>" % (
-                type_for_enum(self.type), self.attr, self.value, self.children)
+                type_for_enum(self.type),
+                self.attr, self.value, self.children)
         else:
             return "<Node t:%s attr:%r value:%r children:%i>" % (
-                type_for_enum(self.type), self.attr, self.value, len(self.children))
+                type_for_enum(self.type),
+                self.attr, self.value, len(self.children))
 
     def obj_repr(self):
         if self.type == TYPES['number']:
-            if self.value == None:
+            if self.value is None:
                 self.value = json.dumps(0)
             return json.loads(self.value)
         elif self.type == TYPES['string']:
-            if self.value == None:
+            if self.value is None:
                 self.value = json.dumps('')
             return json.loads(self.value)
         elif self.type == TYPES['boolean']:
-            if self.value == None:
+            if self.value is None:
                 self.value = json.dumps(False)
             return json.loads(self.value)
         elif self.type == TYPES['list']:
@@ -127,7 +132,6 @@ class Node(object):
             return None
         else:
             raise Exception("%i is not defined in the TYPES table" % self.type)
-
 
     @classmethod
     def default_for_type(self, t):
@@ -150,9 +154,9 @@ class Node(object):
         if type(obj) in (int, long, float, bool, str, unicode):
             self.value = json.dumps(obj)
         elif type(obj) in (Node,):
-            if obj.value != None:
+            if obj.value is not None:
                 self.value = obj.value
-            if obj.children != None:
+            if obj.children is not None:
                 self.children = obj.children
             else:
                 raise Exception("Bad set value")
@@ -208,7 +212,8 @@ class Node(object):
             elif self.type == TYPES['list']:
                 return self.children[int(key)]
             else:
-                raise Exception('Invalid path: cannot index type %s' % self.type)
+                raise Exception(
+                    'Invalid path: cannot index type %s' % self.type)
         else:
             raise Exception('invalid path')
 
@@ -246,7 +251,8 @@ class Node(object):
                 else:
                     self.children[int(key)] = Node.from_obj(value)
             else:
-                raise Exception('Invalid path: cannot index type %s' % self.type)
+                raise Exception(
+                    'Invalid path: cannot index type %s' % self.type)
         else:
             raise Exception('invalid path')
 
@@ -262,18 +268,20 @@ class Node(object):
             new_children = []
             for i in self.children:
                 if key != i.attr['key']:
-                    new_children.append(i);
-            self.children = new_children;
+                    new_children.append(i)
+            self.children = new_children
         elif type(key) in (int, long):
             if self.type == TYPES['string']:
                 raise Exception('not supported')
             elif self.type == TYPES['list']:
                 ikey = int(key)
                 if ikey == 0:
-                    self.children = self.children[ikey+1:]
+                    self.children = self.children[ikey + 1:]
                 else:
-                    self.children = self.children[:ikey] + self.children[ikey+1:]
+                    nc = self.children[:ikey] + self.children[ikey + 1:]
+                    self.children = nc
             else:
-                raise Exception('Invalid path: cannot index type %s' % self.type)
+                raise Exception(
+                    'Invalid path: cannot index type %s' % self.type)
         else:
             raise Exception('invalid path')

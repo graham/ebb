@@ -1,6 +1,7 @@
 import math
 import sys
 
+
 def is_prime(n):
     if n == 2:
         return True
@@ -11,11 +12,13 @@ def is_prime(n):
 
     return True
 
+
 def gen_next_prime(prev):
     prev += 2
     while not is_prime(prev):
         prev += 2
     return prev
+
 
 class Revision(object):
     def __init__(self):
@@ -48,4 +51,3 @@ class Revision(object):
             return True
         else:
             return False
-    

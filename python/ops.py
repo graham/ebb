@@ -1,6 +1,7 @@
 import trees
 import uuid
 
+
 def safe_bound(x):
     if x > 0:
         return x
@@ -26,16 +27,16 @@ class Operation(object):
         # one way to get it done until I come up with a cleaner way.
         return unpack(self.pack())
 
-    ###### Now it gets fun, this should eventually be split out into classes or 
-    ###### some sort of lookup table so that the user could feasibly define their
-    ###### own, although, that also seems like a bad idea.
+    ###### Now it gets fun, this should eventually be split out into classes or
+    ###### some sort of lookup table so that the user could feasibly define
+    ###### their own, although, that also seems like a bad idea.
     def handle_mutate(self, root, tpath, oplist):
         new_list = []
         for row in oplist:
             new_row = row
-            
+
             if tpath and tpath != row[1]:
-                if all([i == j for i,j in zip(tpath, row[1])]):
+                if all([i == j for i, j in zip(tpath, row[1])]):
                     new_row = self.handle_mutate_with_path(row, tpath)
                 new_list.append(new_row)
             else:
@@ -59,7 +60,7 @@ class Operation(object):
             print self
         else:
             return row
-        
+
     def handle_mutate_with_path_string(self, row, tpath):
         p = row[2].clone()
         if type(self) == StringInsertOperation:
@@ -84,7 +85,7 @@ class Operation(object):
             return self.handle_mutate_without_path_list(row, tpath)
         else:
             return row
-        
+
     def handle_mutate_without_path_string(self, row, tpath):
         p = row[2].clone()
 
@@ -114,6 +115,7 @@ class Operation(object):
             pass
     ### End Pavelian History Maintenence.
 
+
 ### Basic Set Operation
 class SetOperation(Operation):
     for_type = '*'
@@ -129,6 +131,7 @@ class SetOperation(Operation):
         new = trees.Node.from_obj(self.value)
         reverse = SetOperation(node.obj_repr())
         return new, reverse
+
 
 ### Number Operations.
 class NumberIncrementOperation(Operation):
@@ -184,13 +187,17 @@ class StringDeleteOperation(Operation):
     def apply(self, node):
         node_value = str(node.obj_repr())
         new = node.clone()
-        new.set_value(node_value[:self.index] + node_value[self.index + self.length:])
+        new.set_value(node_value[:self.index] +
+                      node_value[self.index + self.length:])
 
-        reverse = StringInsertOperation(self.index, node_value[self.index:self.index+self.length])
+        reverse = StringInsertOperation(
+            self.index, node_value[self.index:self.index + self.length])
         return new, reverse
+
 
 class StringSetOperation(Operation):
     for_type = 'string'
+
     def __init__(self, value):
         Operation.__init__(self)
         self.value = value
@@ -204,10 +211,11 @@ class StringSetOperation(Operation):
         reverse = StringSetOperation(node.obj_repr())
         return new, reverse
 
-### Boolean operations.
 
+### Boolean operations.
 class BooleanSetOperation(Operation):
     for_type = 'boolean'
+
     def __init__(self, value):
         Operation.__init__(self)
         self.value = value
@@ -222,10 +230,11 @@ class BooleanSetOperation(Operation):
         reverse = BooleanSetOperation(not self.value)
         return new, reverse
 
-### List operations.
 
+### List operations.
 class ListInsertOperation(Operation):
     for_type = 'list'
+
     def __init__(self, index, value):
         Operation.__init__(self)
         self.index = index
@@ -240,8 +249,10 @@ class ListInsertOperation(Operation):
         reverse = ListDeleteOperation(self.index, len(self.value))
         return new, reverse
 
+
 class ListDeleteOperation(Operation):
     for_type = 'list'
+
     def __init__(self, index, length):
         Operation.__init__(self)
         self.index = index
@@ -252,12 +263,15 @@ class ListDeleteOperation(Operation):
 
     def apply(self, node):
         new = node.clone()
-        reverse = ListInsertOperation(self.index, new.children[self.index:self.index+self.length])
+        reverse = ListInsertOperation(
+            self.index, new.children[self.index:self.index + self.length])
         new.children = new.children[:self.index] + new.children[self.index + self.length:]
         return new, reverse
 
+
 class ListSetIndexOperation(Operation):
     for_type = 'list'
+
     def __init__(self, index, value):
         Operation.__init__(self)
         self.index = index
@@ -280,8 +294,10 @@ class ListSetIndexOperation(Operation):
         reverse = ListSetIndexOperation(self.index, old)
         return new_node, reverse
 
+
 class ListApplyIndexOperation(Operation):
     for_type = 'list'
+
     def __init__(self, index, operation):
         Operation.__init__(self)
         self.index = index
@@ -296,7 +312,7 @@ class ListApplyIndexOperation(Operation):
 
         new_node = node.clone()
         new_node.children = []
-        
+
         for index, item in enumerate(node.children):
             if index == self.index:
                 new_node.children.append(new)
@@ -305,10 +321,12 @@ class ListApplyIndexOperation(Operation):
 
         return new_node, reverse_op
 
+
 ### Dictionary Operations.
 ### This is tricky.
 class DictKeyApplyOperation(Operation):
     for_type = 'dict'
+
     def __init__(self, key, operation):
         Operation.__init__(self)
         self.key = key
@@ -327,9 +345,10 @@ class DictKeyApplyOperation(Operation):
         reverse_op = DictKeyApplyOperation(self.key, reverse)
         return new_node, reverse_op
 
+
 class MovePathOperation(Operation):
     for_type = 'dict'
-    
+
     def __init__(self, source_path, target_path):
         Operation.__init__(self)
         self.source_path = source_path
@@ -346,8 +365,9 @@ class MovePathOperation(Operation):
 
         reverse = MovePathOperation(self.target_path, self.source_path)
         return new, reverse
-    
-# sets
+
+
+#sets
 class SetAddOperation(Operation):
     for_type = 'set'
 
@@ -360,6 +380,7 @@ class SetAddOperation(Operation):
 
     def apply(self, node):
         pass
+
 
 class SetRemoveOperation(Operation):
     for_type = 'set'
@@ -374,27 +395,33 @@ class SetRemoveOperation(Operation):
     def apply(self, node):
         pass
 
+
 # zsets
 class ScoredSetAddOperation(Operation):
     pass
+
+
 class ScoredSetApplyOperation(Operation):
     pass
+
+
 class ScoredSetDropOperation(Operation):
     pass
 
 
 op_lookup = {
-    'NumberIncrementOperation':NumberIncrementOperation,
-    'StringInsertOperation':StringInsertOperation,
-    'StringDeleteOperation':StringDeleteOperation,
-    'StringSetOperation':StringSetOperation,
-    'BooleanSetOperation':BooleanSetOperation,
-    'ListInsertOperation':ListInsertOperation,
-    'ListDeleteOperation':ListDeleteOperation,
-    'ListSetIndexOperation':ListSetIndexOperation,
-    'ListApplyIndexOperation':ListApplyIndexOperation,
-    'DictKeyApplyOperation':DictKeyApplyOperation
+    'NumberIncrementOperation': NumberIncrementOperation,
+    'StringInsertOperation': StringInsertOperation,
+    'StringDeleteOperation': StringDeleteOperation,
+    'StringSetOperation': StringSetOperation,
+    'BooleanSetOperation': BooleanSetOperation,
+    'ListInsertOperation': ListInsertOperation,
+    'ListDeleteOperation': ListDeleteOperation,
+    'ListSetIndexOperation': ListSetIndexOperation,
+    'ListApplyIndexOperation': ListApplyIndexOperation,
+    'DictKeyApplyOperation': DictKeyApplyOperation
 }
+
 
 def unpack(args):
     klass = op_lookup[args[0]]

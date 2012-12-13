@@ -7,6 +7,7 @@ from ns import Namespace
 # end up interacting with the namespaces. For some creating
 # the actual operations might be too difficult.
 
+
 class NamespaceHelper(Namespace):
     def _parse(self, key):
         res = key.split('/', 1)
@@ -89,7 +90,7 @@ class NamespaceHelper(Namespace):
 
     def rpop(self, fullkey):
         current, key, path = self.get_path_value_meta(fullkey)
-        op = ops.ListDeleteOperation(len(current)-1, 1)
+        op = ops.ListDeleteOperation(len(current) - 1, 1)
 
         self.execute(key, path, op)
 
@@ -140,5 +141,6 @@ class NamespaceHelper(Namespace):
     def slen(self, key):
         return len(self.get_path_value(key))
     ### END STRING FUNCTIONS
-    
+
+
 x = NamespaceHelper('test')

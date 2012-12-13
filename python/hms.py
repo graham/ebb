@@ -1,10 +1,11 @@
-import uuid
+ximport uuid
 import trees
 import hashlib
 
+
 class Commit(object):
     def __init__(self, uid=None):
-        if (uid == None):
+        if (uid is None):
             uid = str(uuid.uuid4())
         self.uid = uid
 
@@ -20,7 +21,7 @@ class HistoryManager(object):
         self.commit_table = {}
         self.head_commit = None
         self.snapshot = None
-        
+
     def init_value(self, py_value):
         t = obj_to_json_type(py_value)
         self.snapshot = trees.Node.from_obj(py_value)
