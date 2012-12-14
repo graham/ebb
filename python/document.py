@@ -170,7 +170,7 @@ class Document(object):
         if target_node.type in (trees.TYPES['string'], trees.TYPES['list']):
             return reversed(reference_op.handle_mutate(root, tpath, oplist))
         elif target_node.type in (trees.TYPES['dict'], ):
-            return reversed(oplist)
+            return reversed(reference_op.handle_mutate(root, tpath, oplist))
         else:
             ## this is a problem.
             return reversed(oplist)

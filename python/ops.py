@@ -40,10 +40,19 @@ class Operation(object):
                     new_row = self.handle_mutate_with_path(row, tpath)
                 new_list.append(new_row)
             else:
-                if self.index > row[2].index:
-                    pass
+                if self.for_type == 'dict':
+                    if self.source_path == row[1]:
+                        new_row = self.handle_mutate_without_path(row, tpath)
+                        root = root.get_path(new_row[1])
+                elif self.for_type in ('list', 'string'):
+                    if self.index > row[2].index:
+                        ## this means that modifications don't affect
+                        ## this op.
+                        pass
+                    else:
+                        new_row = self.handle_mutate_without_path(row, tpath)
                 else:
-                    new_row = self.handle_mutate_without_path(row, tpath)
+                    raise Exception('unsupported type')
 
                 newroot, newrev = new_row[2].apply(root)
                 new_list.append([new_row[0], new_row[1], new_row[2], newrev])
@@ -57,7 +66,7 @@ class Operation(object):
         elif self.for_type == 'list':
             return self.handle_mutate_with_path_list(row, tpath)
         elif self.for_type == 'dict':
-            print self
+            return self.handle_mutate_with_path_dict(row, tpath)
         else:
             return row
 
@@ -83,8 +92,13 @@ class Operation(object):
             return self.handle_mutate_without_path_string(row, tpath)
         elif self.for_type == 'list':
             return self.handle_mutate_without_path_list(row, tpath)
+        elif self.for_type == 'dict':
+            return self.handle_mutate_without_path_dict(row, tpath)
         else:
             return row
+
+    def handle_mutate_without_path_dict(self, row, tpath):
+        return [row[0], self.target_path, row[2], row[3]]
 
     def handle_mutate_without_path_string(self, row, tpath):
         p = row[2].clone()

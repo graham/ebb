@@ -204,7 +204,7 @@ class TestDocument(unittest.TestCase):
         op2 = ops.ListApplyIndexOperation(2, ops.NumberIncrementOperation(1000))
         d = d.include_operation([0], op2, ts=900)
         self.assertEqual(d.root.obj_repr(), [ [333, 1,2,1003], [4,5,6], [7,8,[9]] ])
-        
+
     def test_move_path_complex_and_history(self):
         d = ns.Document(trees.Node.from_obj({'key':[1,2,3], 'word':1}))
 
@@ -225,7 +225,26 @@ class TestDocument(unittest.TestCase):
         d = d.include_operation(['key'], op_after, ts=1)
         self.assertEqual(d.root.obj_repr(), {'key':[-1,-2,1,42,126, "hello world"], 'word':101})
 
-        print d.root.obj_repr()
         op5 = ops.MovePathOperation(['word'], ['asdf'])
         d = d.include_operation([], op5, ts=15)
+
+        self.assertEqual(d.root.obj_repr(), {'key':[-1,-2,1,42,126, "hello world"], 'asdf':101})
+
+    def test_super_complex_dict_move(self):
+        ## I'm not confident this is a complete test yet.
+        d = ns.Document(trees.Node.from_obj({'key':{'second':{'third':3}}, 'word':1}))
         
+        op = ops.MovePathOperation(['key','second'], ['key','2nd'])
+        d = d.include_operation([], op, ts=10)
+        self.assertEqual(d.root.obj_repr(), {'key':{'2nd':{'third':3}}, 'word':1})
+
+        op2 = ops.MovePathOperation(['key', '2nd', 'third'], ['key', '2nd', '333'])
+        d = d.include_operation([], op2, ts=20)
+        self.assertEqual(d.root.obj_repr(), {'key':{'2nd':{'333':3}}, 'word':1})
+
+        op3 = ops.NumberIncrementOperation(100)
+        d = d.include_operation(['key', 'second', 'third'], op3, ts=0)
+        self.assertEqual(d.root.obj_repr(), {'key':{'2nd':{'333':103}}, 'word':1})
+
+        d = d.exclude_operation(op2)
+        self.assertEqual(d.root.obj_repr(), {'key':{'2nd':{'third':103}}, 'word':1})

@@ -8,7 +8,6 @@ import ops
 import os
 
 if __name__ == '__main__':
-    from test_current import *
     from test_ns import *
     from test_document import *
     from test_ops import *
