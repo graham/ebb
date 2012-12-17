@@ -1,6 +1,11 @@
 # Ebb Todo
 
  - recover revision history on load.
+ - dictionary key rename. @done @not-fully-tested
+ - fs store
+ - mongo store
+ - remote host api (inbound and outbound operations)
+ - prime number factoring for operation inclusion (requires master or other decider mechanism)
 
 ### Major issues
 
