@@ -77,17 +77,6 @@ class Document(object):
             return False
 
     def include_operation(self, path, operation, ts=None, parent_rev=None):
-        if parent_rev is None:
-            return self.include_operation_ts(path, operation, ts=ts)
-        else:
-            return self.include_operation_parent_rev(path,
-                                                     operation,
-                                                     parent_rev=parent_rev)
-
-    def include_operation_parent_rev(self, path, operation, parent_rev=None):
-        pass
-
-    def include_operation_ts(self, path, operation, ts=None):
         #make sure that the operation has not been included yet.
         assert not self.history_includes_operation(operation)
 
@@ -97,7 +86,7 @@ class Document(object):
             else:
                 self.root = trees.Node(type=operation.for_type)
 
-        if ts is None:
+        if ts is None and parent_rev is None:
             ts = time.time()
 
             target_root = self.root.clone()
@@ -117,6 +106,7 @@ class Document(object):
             for i in self.history_buffer:
                 x.history_buffer.append(i)
             x.history_buffer.append([ts, path, operation, reverse])
+
             return x
         else:
             to_unroll = []

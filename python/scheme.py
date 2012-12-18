@@ -1,8 +1,7 @@
 def scheme_reduce_value(env, t, data):
     if type(data) != str:
         return data
-
-    if t == 'number':
+    elif t == 'number':
         if '.' in data or data.endswith('f'):
             return float(data.strip('f'))
         else:
@@ -16,8 +15,7 @@ delay_eval = ['define', 'quote', 'begin']
 def scheme_parse_symbol(content):
     if type(content) == tuple:
         return content
-
-    if type(content) == int:
+    elif type(content) == int:
         return ('number', str(content))
     elif content == None:
         return ('null', None)
@@ -51,13 +49,16 @@ def scheme_eval(block, env):
     else:
         return result
 
+def easy_val(x):
+    return map(lambda x: scheme_reduce_value(env, x[0], x[1]), x)
+
 class Environment(dict):
     def __init__(self, values, outer=None, default=False):
         self.outer = outer
 
         if default:
-            values['+'] = lambda x, env: ('number', sum(map(lambda i: int(i[1]), x)))
-            values['*'] = lambda x, env: ('number', reduce(lambda prev, cur: prev * cur, map(lambda i: int(i[1]), x)))
+            values['+'] = lambda x, env: ('number', sum(easy_val(x)))
+            values['*'] = lambda x, env: ('number', reduce(lambda prev, cur: prev * cur, easy_val(x)))
     
             def p(s, env):
                 result = []
@@ -89,7 +90,7 @@ class Environment(dict):
 
     def find(self, key):
         if key in self:
-            return self[key]
+            return self.get(key)
         else:
             if self.outer != None:
                 return self.outer.find(key)
@@ -98,6 +99,13 @@ class Environment(dict):
 
     def set(self, key, value):
         self[key] = value
+
+    def __getitem__(self, key):
+        obj = dict.__getitem__(self, key)
+        if type(obj) == tuple:
+            return obj[1]
+        return obj
+
 
 class CodeObject(object):
     string_push = ["'", '"', '|']
@@ -193,10 +201,10 @@ if __name__ == '__main__':
     env = Environment({}, default=True)
 
     tests = [
-        "(define result (+ 1 2 (* 123 123 123)))",
+        "(define result (+ 1 2))",
         "(print 'hello world')",
         "(begin (define x 1) (print (+ 123 123 123 x)))",
-        "(print 'the final number is %(result)r')",
+        "(print 'the final number is %(result)s')",
         ]
       
     for i in tests:
