@@ -1,9 +1,0 @@
-Storage:
-	- Prime issue with storage is making sure that it's going to work in the long term and not be too busy.
-
-	Namespace -> Key -> Operations
-	Namespace -> Key -> Packed Files
-	
-	Operations are simply saved 
-
-

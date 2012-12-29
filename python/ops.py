@@ -359,7 +359,7 @@ class DictKeyApplyOperation(Operation):
         reverse_op = DictKeyApplyOperation(self.key, reverse)
         return new_node, reverse_op
 
-
+## SUP
 class MovePathOperation(Operation):
     for_type = 'dict'
 

@@ -1,7 +1,6 @@
 # Ebb Todo
 
  - recover revision history on load.
- - dictionary key rename. @done @not-fully-tested
  - fs store
  - mongo store
  - remote host api (inbound and outbound operations)
@@ -16,4 +15,10 @@ This is one of those topics that is probably more suited for a math major. Howev
 One major issue with the growth of the revision history is that Ebb needs to be able to determine if a modification has been applied to a revision tree quickly and easily. One option is to have a list of previous IDs, however, this gets large quickly and seralizing and unseralizing this seems like it'd get pretty bulky.
 
 A possible solution, although one I haven't really thought through yet would be to use prime numbers as a way to keep track of which revisions are apart of your current history. By having the "current revision" simply be a product of prime numbers you can assure that a revision is included by determining if the id (a prime) is a factor of the final number. 
+
+## Major Milestones
+### Recovering from a shutdown.
+
+ It's pretty clear right now that you can't recover once you've killed the current session of your python interpreter. Making sure that the Ebb state is stored correctly so that it's possible to recover to a valid (most current) state is super important (even if there are no external operations to incorporate).
+
 

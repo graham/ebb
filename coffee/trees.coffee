@@ -24,7 +24,5 @@ type_for_enum = (k) ->
       return i
 
 class Node
-  constructor: ->
-
-  
+  constructor: (options) ->
         
