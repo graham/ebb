@@ -1,6 +1,7 @@
 import ops
 import trees
 import time
+import json
 
 
 class Document(object):
@@ -14,11 +15,27 @@ class Document(object):
         self.root = root
         self.history_buffer = []
 
+    def last_op(self):
+        if len(self.history_buffer) == 0:
+            return ''
+        else:
+            ts, path, forward, backward = self.history_buffer[-1]
+            return ts, path, forward, backward
+
     def pack(self):
+        ## there should be a checksum here.
         s = []
         for i in self.history_buffer:
-            s.append(json.dumps([i[0], i[1], i[2].pack()]))
-        return '\n'.join(s)
+            s.append([i[0], i[1], i[2].pack()])
+        return json.dumps(s)
+
+    @classmethod
+    def unpack(cls, hb):
+        doc = Document()
+        for ts, path, packed_op in hb:
+            op = ops.Operation.unpack(packed_op)
+            doc = doc.include_operation(path, op, ts=ts)
+        return doc
 
     def __str__(self):
         return "<Document value=%r>" % str(self.root.obj_repr())

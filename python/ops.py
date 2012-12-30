@@ -16,16 +16,23 @@ class Operation(object):
     def __init__(self):
         self._id = str(uuid.uuid4())
         #for the new way of thinking
-        self.target_commit = None
+        self.target_revision = None
 
     def __repr__(self):
         return "<Op: %s>" % self.pack()
+
+    @classmethod
+    def unpack(cls, args):
+        klass = op_lookup[args[0]]
+        k = klass(*args[2:])
+        k._id = args[1]
+        return k
 
     def clone(self):
         # This is a all around bad method, but frankly, I want to ensure that
         # if you get an object it can't change out from under you, so this is
         # one way to get it done until I come up with a cleaner way.
-        return unpack(self.pack())
+        return Operation.unpack(self.pack())
 
     ###### Now it gets fun, this should eventually be split out into classes or
     ###### some sort of lookup table so that the user could feasibly define
@@ -436,9 +443,3 @@ op_lookup = {
     'DictKeyApplyOperation': DictKeyApplyOperation
 }
 
-
-def unpack(args):
-    klass = op_lookup[args[0]]
-    k = klass(*args[2:])
-    k._id = args[1]
-    return k
