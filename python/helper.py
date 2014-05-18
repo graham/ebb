@@ -8,7 +8,17 @@ from ns import Namespace
 # the actual operations might be too difficult.
 
 
-class NamespaceHelper(Namespace):
+class NamespaceHelper(object):
+    def __init__(self, ns):
+        self.ns = ns
+
+    def get(self, *args, **kwargs):
+        return self.ns.get(*args, **kwargs)
+    def get_value(self, *args, **kwargs):
+        return self.ns.get_value(*args, **kwargs)
+    def execute(self, *args, **kwargs):
+        return self.ns.execute(*args, **kwargs)
+
     def _parse(self, key):
         res = key.split('/', 1)
         if len(res) > 1:
@@ -46,7 +56,7 @@ class NamespaceHelper(Namespace):
         return doc.root.get_path(path).obj_repr(), key, path
 
     def exists(self, key):
-        return key in self.docs
+        return key in self.ns.docs
 
     getp = get_path
     getpv = get_path_value

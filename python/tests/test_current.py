@@ -10,65 +10,52 @@ import os
 import trees
 import ns
 import ops
+import helper
 
 class TestCurrent(unittest.TestCase):
-    def test_fs_storage_reload_from_disk(self):
-        x = ns.NamespaceFS('test_namespace')
-        x.purge()
-        x.init()
 
-        keys = ['key_%i' % i for i in range(0, 10)]
-        for i in keys:
-            for j in range(0, 5):
-                op = ops.NumberIncrementOperation(random.randint(100, 1000))
-                x.execute(i, [], op)
-            x.flush()
-        x.flush()
+    def test_fs_storage_with_list(self):
+        x = helper.NamespaceHelper(ns.NamespaceFS('test_namespace'))
+        y = helper.NamespaceHelper(ns.NamespaceFS('test_namespace'))
+        y.ns.META_ROOT = '/tmp/local2/'
 
-        #---------
+        x.ns.purge()
+        y.ns.purge()
 
-        y = ns.NamespaceFS('test_namespace')
-        y.full_load()
+        x.ns.init()
+        y.ns.init()
 
-        for i in keys:
-            left = x.get_value(i)
-            right = y.get_value(i)
-            self.assertEqual( left, right )
+        x.incr('key', 100)
+        y.incr('key', 100)
 
-    def test_fs_storage_with_conflict(self):
-        x = ns.NamespaceFS('test_namespace')
-        y = ns.NamespaceFS('test_namespace')
-        y.META_ROOT = '/tmp/local2/'
+        x.ns.flush()
+        y.ns.flush()
 
-        x.purge()
-        y.purge()
+        x.ns.full_load()
+        x.ns.flush()
+        y.ns.full_load()
+        y.ns.flush()
+        
+        self.assertEqual(x.get_value('key'), y.get_value('key'))
 
-        x.init()
-        y.init()
+        x.lpush('list', 'asdf')
+        y.lpush('list', '9292939129391239')
 
-        keys = ['key_%i' % i for i in range(0, 10)]
-        for i in keys:
-            for j in range(0, 5):
-                op = ops.NumberIncrementOperation(random.randint(100, 1000))
-                x.execute(i, [], op)
-            x.flush()
-        x.flush()
+        x.ns.flush()
+        y.ns.flush()
 
-        x_op = ops.NumberIncrementOperation(100)
-        y_op = ops.NumberIncrementOperation(500)
+        x.ns.full_load()
+        x.ns.flush()
+        y.ns.full_load()
+        y.ns.flush()
 
-        y.execute('key_1', [], y_op)
-        x.execute('key_1', [], x_op)
+        print x.get_value('list')
+        print y.get_value('list')
 
-        x.flush()
-        y.flush()
+        print x.get('list').history_buffer
+        print y.get('list').history_buffer
+        
 
-        x.full_load()
-        y.full_load()
-
-        y.flush()
-        x.flush()
-        self.assertEqual(x.get_value('key_1'), y.get_value('key_1'))
         
 if __name__ == '__main__':
     unittest.main()

@@ -115,7 +115,7 @@ class NamespaceFS(Namespace):
                 self.dirty_ops.append((ts, key, path, op))
                 if not self.docs[key].history_includes_operation(op):
                     self.docs[key] = self.docs[key].include_operation(path, op, ts=ts)
-                    self.dirty_docs[key] = self.docs[key], op._id
+                    #self.dirty_docs[key] = self.docs[key], op._id
 
     def load_local_state(self):
         path_to_docs = '%s/%s' % (self.META_ROOT, self.DIR_WITH_META_STATE)
@@ -134,7 +134,8 @@ class NamespaceFS(Namespace):
     def load_document(self, hkey):
         path_to_docs = '%s/%s' % (self.META_ROOT, self.DIR_WITH_META_STATE)
         file_path = '%s/%s' % (path_to_docs, hkey)
-        key, doc_hb = json.loads(open(file_path).read())
+        data = open(file_path).read()
+        key, doc_hb = json.loads(data)
         assert hkey == hashlib.md5(key).hexdigest()
         doc = self.constructor.unpack(json.loads(doc_hb))
         self.docs[key] = doc
@@ -185,6 +186,8 @@ class NamespaceFS(Namespace):
     def purge(self):
         if os.path.isdir(self.SYNC_ROOT):
             shutil.rmtree(self.SYNC_ROOT)
+        if os.path.isdir(self.META_ROOT):
+            shutil.rmtree(self.META_ROOT)
     
 
 class NamespaceSQLite(NamespaceFS):

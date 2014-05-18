@@ -1,6 +1,6 @@
 import trees
 import uuid
-
+import json
 
 def safe_bound(x):
     if x > 0:
@@ -24,6 +24,9 @@ class Operation(object):
     @classmethod
     def unpack(cls, args):
         klass = op_lookup[args[0]]
+        if len(args) > 3 and type(args[3]) == list:
+            args[3] = map(lambda x: trees.Node.unpack(x), args[3])
+
         k = klass(*args[2:])
         k._id = args[1]
         return k
@@ -106,7 +109,7 @@ class Operation(object):
 
     def handle_mutate_without_path_dict(self, row, tpath):
         return [row[0], self.target_path, row[2], row[3]]
-
+        
     def handle_mutate_without_path_string(self, row, tpath):
         p = row[2].clone()
 
@@ -262,7 +265,7 @@ class ListInsertOperation(Operation):
         self.value = value
 
     def pack(self):
-        return ["ListInsertOperation", self._id, self.index, self.value]
+        return ["ListInsertOperation", self._id, self.index, [i.pack() for i in self.value]]
 
     def apply(self, node):
         new = node.clone()

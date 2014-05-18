@@ -67,6 +67,15 @@ class Node(object):
     def clone(self):
         return Node.from_obj(self.obj_repr())
 
+    def pack(self):
+        return (self.type, self.attr, self.value, self.children)
+
+    @classmethod
+    def unpack(cls, pack):
+        n = Node()
+        n.type, n.attr, n.value, n.children = pack
+        return n        
+
     @classmethod
     def from_obj(cls, obj):
         t = obj_to_json_type(obj)
@@ -157,7 +166,7 @@ class Node(object):
             if obj.value is not None:
                 self.value = obj.value
             if obj.children is not None:
-                self.children = obj.children
+                self.children = map(lambda x: x if type(x) == Node else Node.unpack(x), obj.children)
             else:
                 raise Exception("Bad set value")
         else:

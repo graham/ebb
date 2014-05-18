@@ -25,4 +25,5 @@ type_for_enum = (k) ->
 
 class Node
   constructor: (options) ->
-        
+    true
+
