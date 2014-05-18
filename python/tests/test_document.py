@@ -173,7 +173,7 @@ class TestDocument(unittest.TestCase):
                 'first':'graham',
                 'last':'abbott',
                 'age':28,
-                'tags':['awesome', 'asshole', 'dropboxer']
+                'tags':['awesome', 'person']
                 }
             }
         d = ns.Document(trees.Node.from_obj(data))
